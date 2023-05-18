@@ -1,29 +1,33 @@
 /******************************************************************
-  @file       xIMU3_Types.h
-  @brief      Types for use with the xIMU3 GUI Arduino Library
-  @author     David Such
-  @copyright  Please see the accompanying LICENSE file
+    @file       xio_API_Types.h
+    @brief      Types for use with the xIO API Arduino Library
+    @author     David Such
+    @copyright  Please see the accompanying LICENSE file
 
-  Code:        David Such
-  Version:     1.0.0
-  Date:        13/04/23
+    Code:       David Such
+    Modified:   Braidan Duffy
 
-  1.0.0     Original Release.       13/04/23
+    Version:    1.0.0
+    Date:       13/04/23
+    Modifed:    17/05/2023
 
-  Credit - Derived from the x-IMU-Arduino-Example by Seb Madgwick
-           (https://github.com/xioTechnologies/x-IMU-Arduino-Example)
-           and using information in the xIMU3 User Manual 
-           (https://x-io.co.uk/downloads/x-IMU3-User-Manual-v1.1.pdf).
-           Uses the Madgwick Quaternion Class.
+    1.0.0       Original Release.                       13/04/23
+    1.1.0       Restylized for Thetis implementation    17/05/2023
+
+    Credit - Derived from the x-IMU-Arduino-Example by Seb Madgwick
+            (https://github.com/xioTechnologies/x-IMU-Arduino-Example)
+            and using information in the xIMU3 User Manual 
+            (https://x-io.co.uk/downloads/x-IMU3-User-Manual-v1.1.pdf).
+            Uses the Madgwick Quaternion Class.
 
 ******************************************************************/
 
-#ifndef xIMU3_Types_h
-#define xIMU3_Types_h
+#ifndef xio_API_Types_h
+#define xio_API_Types_h
 
 /******************************************************************
  *
- * xIMU3 Structs - from XimuReceiver.h
+ * xio API Structs - from XimuReceiver.h
  * (https://github.com/xioTechnologies/x-IMU-Arduino-Example)
  * 
  ******************************************************************/
@@ -62,7 +66,7 @@ typedef struct {
 
 /******************************************************************
  *
- * xIMU3 Additional Enums and Structs - 
+ * xio API Additional Enums and Structs - 
  * 
  ******************************************************************/
 
@@ -114,4 +118,40 @@ struct RSSIData {
   float power;
 };
 
-#endif
+struct RawData {
+    int16_t rx, ry, rz;
+    uint32_t  timestamp;
+};
+
+struct ScaledData {
+    float sx, sy, sz;
+    uint32_t  timestamp;
+};
+
+struct SensorData {
+  float ax, ay, az;
+  float gx, gy, gz;
+  float mx, my, mz;
+  uint32_t gTimestamp, aTimestamp, mTimestamp;
+};
+
+struct Ping {
+  char *interface;
+  char *deviceName;
+  char *serialNumber;
+};
+
+struct NetworkAnnouncement {
+  uint16_t sync;
+  char *displayName;
+  char *serialNumber;
+  char *ipAddress;
+  uint16_t portTCP;
+  uint16_t sendUDP;
+  uint16_t receiveUDP;
+  uint8_t rssiPercentage;
+  uint8_t batteryPercentage;
+  uint8_t chargingStatus;
+};
+
+#endif // xio_API_Types_h
