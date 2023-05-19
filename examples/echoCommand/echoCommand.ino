@@ -15,24 +15,23 @@
 
 ******************************************************************/
 
-#include "Reefwing_xIMU3.h"
-
-Reefwing_xIMU3 rx;
+#include "ThetisAPI.h"
 
 void setup() {
   //  Start Serial and wait for connection
   Serial.begin(115200);
   while (!Serial);
+  api.begin(&Serial);
 
-  rx.sendNotification("Arduino Connected");
+  api.sendNotification("Arduino Connected");
 }
 
 void loop() {
-  rx.checkForCommand();
-  if (rx.newCommand()) {
-    char *cmdPtr = rx.getCommand();
+  api.checkForCommand();
+  if (api.newCommand()) {
+    char *cmdPtr = api.getCommand();
 
     //  Echo Command to x-IMU3 GUI
-    rx.sendNotification(cmdPtr);
+    api.sendNotification(cmdPtr);
   }
 }
