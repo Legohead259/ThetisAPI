@@ -28,8 +28,6 @@
 #define xioAPI_VERSION_MINOR     1
 #define xioAPI_VERSION_REVISION  0
 
-#undef DEFAULT 
-
 namespace xioAPI_Protocol {
 
 /**
@@ -128,7 +126,7 @@ enum APIKeyHashASCII {
     // --- COMMANDS ---
     // ----------------
 
-    DEFAULT     = 0x0885548A,
+    XIO_DEFAULT = 0x0885548A,
     APPLY       = 0x0F199E4B,
     SAVE        = 0x7C9DCB54,
     TIME        = 0x7C9E7894,
@@ -146,8 +144,6 @@ enum APIKeyHashASCII {
     FACTORY     = 0x98F9347D,
     ERASE       = 0x0F62DA15
 };
-
-#define DEFAULT 1
 
 /******************************************************************
  *

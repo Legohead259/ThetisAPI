@@ -119,22 +119,78 @@ bool xioAPI::checkForCommand() {
 }
 
 void xioAPI::handleCommand(char* cmdPtr) {
-    // Serial.println(cmdPtr); // DEBUG
+    Serial.println(cmdPtr); // DEBUG
     uint32_t cmdHash = hash(cmdPtr);
-    // Serial.println(cmdHash, HEX); // DEBUG
+    Serial.println(cmdHash, HEX); // DEBUG
 
     using xioAPI_Protocol::APIKeyHashASCII;
     switch(cmdHash) {
+        // Check for setting read/writes
+        case SERIAL_NUMBER: case DEVICE_NAME:
+            if (_value != nullptr) { // Assume that a WRITE command has been sent
+                // TODO: Update settings and send back a message with the same JSON as received
+            }
+            // TODO: sendSetting(cmdPtr);
+            break;
+        case XIO_DEFAULT:
+            // TODO: Set settings to factory defaults (TODOTODO: Make a factory default settings file)
+            // and send back a message with the same JSON
+            break;
+        case APPLY:
+            // TODO: ignore? Because I don't like??
+            break;
+        case SAVE:
+            // TODO: Save all settings to config file and send back message with same received JSON
+            break;
+        case TIME:
+            if (_value != nullptr) { // Assume that a WRITE command has been sent
+                // TODO: Update RTC with the _value
+            }
+            // TODO: Send back a message with the current system time formatted in "YYYY-MM-DD hh:mm:ss"
+            break;
         case PING:
             sendPing(Ping{"USB", "Thetis-F5", "001"});
+            // TODO: sendPing(Ping{getSetting(INTERFACE), getSetting(DEVICE_NAME), getSetting(SERIAL_NUMBER)})
+            break;
+        case RESET:
+            // TODO: Return the message and reset the microcontroller
+            break;
+        case SHUTDOWN:
+            // TODO: Return the message and shutdown the microcontroller
+            break;
+        case STROBE:
+            strobe();
+            break;
+        case COLOUR:
+            colour(getValue());
+            break;
+        case HEADING:
+            // TODO: Update the AHRS heading value - IF ahrsMagnetometerIgnored is TRUE and return the message
+            break;
+        case xioAPI_Protocol::ACCESSORY:
+            // TODO: Transmit data across the OTG serial bus and return the message
             break;
         case NOTE:
             sendNotification(getValue());
             break;
+        case FORMAT:
+            // TODO: Format the datalogging SD card and return the message
+            break;
+        case TEST:
+            // TODO: Run a self-test routine and send back the response
+            break;
+        case BOOTLOADER:
+            // TODO: Return the message and put the chip into BOOTLOADER mode
+            break;
+        case FACTORY:
+            // TODO: set the device into a factory mode
+            break;
+        case ERASE:
+            // TODO: Erase the config file and return the message
         default:
-            // char _buf[32];
-            // sprintf(_buf, "Did not recognize key: %lu", cmdHash);
-            // sendError(_buf);
+            char _buf[48];
+            sprintf(_buf, "Did not recognize key: %lu", cmdHash);
+            sendError(_buf);
             return;
     }
 }

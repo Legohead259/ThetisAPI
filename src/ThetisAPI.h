@@ -29,6 +29,8 @@
 
 #include "xioAPI.h"
 
+#include "../../misc/neopixel.h"
+
 
 // =============================
 // === THETIS API DEFINITION ===
@@ -37,8 +39,9 @@
 
 class ThetisAPI: public xioAPI {
 public:
-    
-    
+    void strobe() override;
+    void colour(const char* colorString) override;
+
 private:
     
 };

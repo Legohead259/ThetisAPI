@@ -28,6 +28,9 @@
 #include "xioAPI_Types.h"
 #include "xioAPI_Protocol.h"
 
+#include "../../misc/neopixel.h"
+
+
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
 
@@ -40,6 +43,13 @@ public:
     char* getValue();
     ValueType getValueType();
     unsigned long hash(const char *str);
+
+    // ------------------------------
+    // --- USER-DEFINED FUNCTIONS ---
+    // ------------------------------
+
+    virtual void strobe(){ return; }
+    virtual void colour(const char* colorString){ return; }
 
     // ------------------------
     // --- COMMAND MESSAGES ---
