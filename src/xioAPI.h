@@ -24,6 +24,7 @@
 #define xioAPI_h
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "xioAPI_Types.h"
 #include "xioAPI_Protocol.h"
 

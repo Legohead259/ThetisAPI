@@ -14,7 +14,6 @@
     
     Credit - Derived from the xIMU3 User Manual 
             (https://x-io.co.uk/downloads/x-IMU3-User-Manual-v1.1.pdf).
-            Uses the Madgwick Quaternion Class.
 ******************************************************************/
 
 #include "xioAPI.h"
@@ -124,7 +123,7 @@ void xioAPI::handleCommand(char* cmdPtr) {
     uint32_t cmdHash = hash(cmdPtr);
     // Serial.println(cmdHash, HEX); // DEBUG
 
-    using xioAPI_Protocol::CommandMessageHashASCII;
+    using xioAPI_Protocol::APIKeyHashASCII;
     switch(cmdHash) {
         case PING:
             sendPing(Ping{"USB", "Thetis-F5", "001"});
