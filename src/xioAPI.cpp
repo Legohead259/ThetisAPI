@@ -59,69 +59,37 @@ ValueType xioAPI::parseValueType(char c) {
 
 bool xioAPI::checkForCommand() {
     char buffer[256];
-  
+    StaticJsonDocument<64> doc;
+
     if (_serialPort->available() > 0) { //  Check for xio API Command Messages
         // Read the incoming bytes
         int blen = _serialPort->readBytesUntil(TERMINAL, buffer, BUFFER_SIZE);
-        TokenState state = START_JSON;
-        
-        // Command & Value character count
-        int index = 0;
-        
-        // Parse JSON Command String, extract command, value, and value type using a state machine.
-        for(int i = 0; i < blen; i++) {
-            switch(state) {
-                case START_JSON:
-                if (buffer[i] == STRING_DELIM) { 
-                    state = START_CMD; 
-                }
-                break;
-                case START_CMD:
-                if (buffer[i] == STRING_DELIM) { 
-                    state = END_CMD; 
-                    _cmd[index] = NULL_TERMINATOR;
-                    index = 0;
-                }
-                else {
-                    _cmd[index] = buffer[i];
-                    index++;
-                }
-                break;
-                case END_CMD:
-                if (buffer[i] == COLON) { state = START_VALUE; }
-                break;
-                case START_VALUE:
-                if (index == 0) {  
-                    // Check 1st char of value to detect type
-                    _valueType = parseValueType(buffer[i]);
-                }
-                if (buffer[i] == END_OBJ) { 
-                    state = END_VALUE; 
-                    _value[index] = NULL_TERMINATOR;
-                }
-                else {
-                    _value[index] = buffer[i];
-                    index++;
-                }
-                break;
-                default:
-                break;
-            }
 
+        DeserializationError error = deserializeJson(doc, buffer, blen);
+
+        if (error) {
+            return false;
         }
+
+        JsonObject root = doc.as<JsonObject>();
+
+        for (JsonPair kv : root) {
+            _cmd = kv.key().c_str();
+            _value = kv.value().as<const char *>();
+        }
+
         return true;
     }
     else {
-        _cmd[0] = NULL_TERMINATOR;
-        _value[0] = NULL_TERMINATOR;
+        // doc.clear();
         return false;
     }
 }
 
-void xioAPI::handleCommand(char* cmdPtr) {
-    Serial.println(cmdPtr); // DEBUG
+void xioAPI::handleCommand(const char* cmdPtr) {
+    // Serial.println(cmdPtr); // DEBUG
     uint32_t cmdHash = hash(cmdPtr);
-    Serial.println(cmdHash, HEX); // DEBUG
+    // Serial.println(cmdHash, HEX); // DEBUG
 
     using xioAPI_Protocol::APIKeyHashASCII;
     switch(cmdHash) {
@@ -149,8 +117,8 @@ void xioAPI::handleCommand(char* cmdPtr) {
             // TODO: Send back a message with the current system time formatted in "YYYY-MM-DD hh:mm:ss"
             break;
         case PING:
-            sendPing(Ping{"USB", "Thetis-F5", "001"});
-            // TODO: sendPing(Ping{getSetting(INTERFACE), getSetting(DEVICE_NAME), getSetting(SERIAL_NUMBER)})
+            sendPing(Ping{"USB", deviceSettings.deviceName, deviceSettings.serialNumber});
+            // TODO: determine which interface the command came from and add to ping message
             break;
         case RESET:
             // TODO: Return the message and reset the microcontroller
@@ -191,20 +159,15 @@ void xioAPI::handleCommand(char* cmdPtr) {
             char _buf[48];
             sprintf(_buf, "Did not recognize key: %lu", cmdHash);
             sendError(_buf);
-            return;
     }
 }
 
-char* xioAPI::getCommand() {
-    char *cmdPtr = _cmd;
-
-    return cmdPtr;
+const char* xioAPI::getCommand() {
+    return _cmd;
 }
 
-char* xioAPI::getValue() {
-    char *valuePtr = _value;
-
-    return valuePtr;
+const char* xioAPI::getValue() {
+    return _value;
 }
 
 ValueType xioAPI::getValueType() {

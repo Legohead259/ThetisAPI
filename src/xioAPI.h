@@ -26,10 +26,8 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "xioAPI_Types.h"
+#include "xioAPI_Settings.h"
 #include "xioAPI_Protocol.h"
-
-#include "../../misc/neopixel.h"
-
 
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
@@ -38,9 +36,9 @@ class xioAPI {
 public:
     bool begin(Stream* port);
     bool checkForCommand();
-    void handleCommand(char* cmdPtr);
-    char* getCommand();
-    char* getValue();
+    void handleCommand(const char* cmdPtr);
+    const char* getCommand();
+    const char* getValue();
     ValueType getValueType();
     unsigned long hash(const char *str);
 
@@ -84,7 +82,15 @@ public:
          * }
          * }\r\n
         */
-       send("{\"ping\":{\"interface\":\"%s\",\"deviceName\":\"%s\",\"serialNumber\":\"%s\"}}\r\n", ping.interface, ping.deviceName, ping.serialNumber);
+        StaticJsonDocument<96> doc;
+        char _out[96];
+
+        doc["interface"] = ping.interface;
+        doc["deviceName"] = ping.deviceName;
+        doc["serialNumber"] = ping.serialNumber;
+
+        serializeJson(doc, _out);
+        send("%s\r\n", _out);
     }
 
     void sendResponse(char *key, char *value) {
@@ -146,7 +152,7 @@ public:
         send("W,%lu,%0.4f,%0.4f\r\n", msg.timestamp, msg.percentage, msg.power);
     }
 
-    void sendNotification(char *note) {
+    void sendNotification(const char *note) {
         // Notification Message Format: "N,timestamp (µs),note\r\n"
         send("N,%lu,%s\r\n", micros(), note);
     }
@@ -160,7 +166,8 @@ protected:
     Stream* _serialPort = nullptr;
     bool _isActive = false;
     ValueType _valueType;
-    char _cmd[CMD_SIZE], _value[NOTE_SIZE];
+    const char* _cmd; 
+    const char* _value;
 
     ValueType parseValueType(char c);
     void print(const char *line);
