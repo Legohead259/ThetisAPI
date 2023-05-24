@@ -59,7 +59,7 @@ ValueType xioAPI::parseValueType(char c) {
 
 bool xioAPI::checkForCommand() {
     char buffer[256];
-    StaticJsonDocument<64> doc;
+    StaticJsonDocument<128> doc;
 
     if (_serialPort->available() > 0) { //  Check for xio API Command Messages
         // Read the incoming bytes
@@ -74,8 +74,9 @@ bool xioAPI::checkForCommand() {
         JsonObject root = doc.as<JsonObject>();
 
         for (JsonPair kv : root) {
-            _cmd = kv.key().c_str();
-            _value = kv.value().as<const char *>();
+            strcpy(_cmd, kv.key().c_str());
+            // Serial.printf("Got: %s\r\n", _cmd); // DEBUG
+            JsonVariant _value = kv.value();
         }
 
         return true;
@@ -92,14 +93,43 @@ void xioAPI::handleCommand(const char* cmdPtr) {
     // Serial.println(cmdHash, HEX); // DEBUG
 
     using xioAPI_Protocol::APIKeyHashASCII;
-    switch(cmdHash) {
-        // Check for setting read/writes
-        case SERIAL_NUMBER: case DEVICE_NAME:
-            if (_value != nullptr) { // Assume that a WRITE command has been sent
-                // TODO: Update settings and send back a message with the same JSON as received
+
+    // First check to see if it is a setting read/write command:
+    const size_t numEntries = sizeof(settingTable) / sizeof(settingTable[0]);
+    for (size_t i=0; i<numEntries; i++) { // Check all keys in the hash table
+        if (settingTable[i].key == cmdHash) { // If the command key is present in the hash table, then it is a setting read/write
+            // Serial.println("Found hash value"); // DEBUG
+            // Serial.println(cmdPtr); // Debug
+            // Serial.println(_value.isNull());
+            if (_value.isNull()) { // If the passed value was null, then it is a read command
+                const float* array;
+                switch (cmdHash) {
+                    case ACCELEROMETER_MISALIGNMENT: case GYROSCOPE_MISALIGNMENT: 
+                    case HIGHG_ACCELEROMETER_MISALIGNMENT: case SOFT_IRON_MATRIX:
+                        array = static_cast<const float*>(settingTable[i].value);
+                        sendSetting(cmdPtr, array, 9);
+                        break;
+                    case ACCELEROMETER_OFFSET: case ACCELEROMETER_SENSITIVITY:
+                    case GYROSCOPE_OFFSET: case GYROSCOPE_SENSITIVITY:
+                    case HIGHG_ACCELEROMETER_OFFSET: case HIGHG_ACCELEROMETER_SENSITIVITY:
+                    case HARD_IRON_OFFSET:
+                        array = static_cast<const float*>(settingTable[i].value);
+                        sendSetting(cmdPtr, array, 3);
+                        break;
+                    default:
+                        sendSetting(cmdPtr, settingTable[i].value);
+                        break;
+                }
             }
-            // TODO: sendSetting(cmdPtr);
-            break;
+            // else {
+                // updateSetting(cmdPtr, _value);
+                // sendSetting(cmdPtr, _value);
+            // }
+            return; // Exit function after handle
+        }
+    }
+
+    switch(cmdHash) {
         case XIO_DEFAULT:
             // TODO: Set settings to factory defaults (TODOTODO: Make a factory default settings file)
             // and send back a message with the same JSON
@@ -117,7 +147,7 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             // TODO: Send back a message with the current system time formatted in "YYYY-MM-DD hh:mm:ss"
             break;
         case PING:
-            sendPing(Ping{"USB", deviceSettings.deviceName, deviceSettings.serialNumber});
+            sendPing(Ping{"USB", settings.deviceName, settings.serialNumber});
             // TODO: determine which interface the command came from and add to ping message
             break;
         case RESET:
@@ -127,13 +157,18 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             // TODO: Return the message and shutdown the microcontroller
             break;
         case STROBE:
-            strobe();
+            cmdStrobe();
             break;
         case COLOUR:
-            colour(getValue());
+            cmdColour(_value);
             break;
         case HEADING:
-            // TODO: Update the AHRS heading value - IF ahrsMagnetometerIgnored is TRUE and return the message
+            if (settings.ahrsIgnoreMagnetometer) {
+                // sendResponse(_cmd, _value);
+            }
+            else {
+                cmdHeading(atof(_value));
+            }
             break;
         case xioAPI_Protocol::ACCESSORY:
             // TODO: Transmit data across the OTG serial bus and return the message
@@ -142,7 +177,7 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             sendNotification(getValue());
             break;
         case FORMAT:
-            // TODO: Format the datalogging SD card and return the message
+            // TODO: Format the data logging SD card and return the message
             break;
         case TEST:
             // TODO: Run a self-test routine and send back the response

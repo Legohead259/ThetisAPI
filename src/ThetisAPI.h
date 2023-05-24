@@ -39,8 +39,8 @@
 
 class ThetisAPI: public xioAPI {
 public:
-    void strobe() override;
-    void colour(const char* colorString) override;
+    void cmdStrobe() override;
+    void cmdColour(const char* colorString) override;
 
 private:
     

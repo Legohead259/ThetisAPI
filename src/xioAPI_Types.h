@@ -18,7 +18,6 @@
             (https://github.com/xioTechnologies/x-IMU-Arduino-Example)
             and using information in the xIMU3 User Manual 
             (https://x-io.co.uk/downloads/x-IMU3-User-Manual-v1.1.pdf).
-            Uses the Madgwick Quaternion Class.
 
 ******************************************************************/
 

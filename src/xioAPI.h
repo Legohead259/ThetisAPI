@@ -46,8 +46,9 @@ public:
     // --- USER-DEFINED FUNCTIONS ---
     // ------------------------------
 
-    virtual void strobe(){ return; }
-    virtual void colour(const char* colorString){ return; }
+    virtual void cmdStrobe() { return; }
+    virtual void cmdColour(const char* colorString) { return; }
+    virtual void cmdHeading(float heading) { return; }
 
     // ------------------------
     // --- COMMAND MESSAGES ---
@@ -57,18 +58,34 @@ public:
         /**
          * Network announcement format:
          * {
-         * "sync": "[sync]",
+         * "sync": [sync],
          * "name": "[displayName]",
          * "sn": "[serialNumber]",
          * "ip": "[ipAddress]",
-         * "port": "[portTCP]",
-         * "send": "[sendUDP]",
-         * "receive": "[receiveUDP]",
-         * "battery": "[batteryPercentage]",
-         * "status": "[chargingStatus]"
+         * "port": [tcpPort],
+         * "send": [udpSendPort],
+         * "receive": [udpReceivePort],
+         * "rssi": [wiFiRSSI]
+         * "battery": [batteryPercentage],
+         * "status": [chargingStatus]
          * }\r\n
         */
-       send("{\"sync\":\"%u\",\"name\":\"%s\",\"sn\":\"%s\",\"ip\":\"%s\",\"port\":\"%u\",\"send\":\"%u\",\"receive\":\"%u\",\"battery\":\"%u\",\"status\":\"%u\"}\r\n", na.sync, na.displayName, na.serialNumber, na.ipAddress, na.portTCP, na.sendUDP, na.receiveUDP, na.batteryPercentage, na.chargingStatus);
+        StaticJsonDocument<256> _doc;
+        char _out[256];
+
+        _doc["sync"] = na.sync;
+        _doc["name"] = na.displayName;
+        _doc["sn"] = na.serialNumber;
+        _doc["ip"] = na.ipAddress;
+        _doc["port"] = na.tcpPort;
+        _doc["send"] = na.udpSendPort;
+        _doc["receive"] = na.udpReceivePort;
+        _doc["rssi"] = na.rssiPercentage;
+        _doc["battery"] = na.batteryPercentage;
+        _doc["status"] = na.chargingStatus;
+
+        serializeJson(_doc, _out);
+        send("%s\r\n", _out);
     }
 
     void sendPing(Ping ping) {
@@ -82,36 +99,80 @@ public:
          * }
          * }\r\n
         */
-        StaticJsonDocument<96> doc;
+        StaticJsonDocument<96> _doc;
         char _out[96];
 
-        doc["interface"] = ping.interface;
-        doc["deviceName"] = ping.deviceName;
-        doc["serialNumber"] = ping.serialNumber;
+        JsonObject root = _doc.createNestedObject("ping");
+        root["interface"] = "USB";
+        root["deviceName"] = "Thetis";
+        root["serialNumber"] = "Unknown";
 
-        serializeJson(doc, _out);
+        serializeJson(_doc, _out);
         send("%s\r\n", _out);
     }
 
-    void sendResponse(char *key, char *value) {
-        /**
-         * Response format:
-         * {
-         * "[key]": "[value]"
-         * } \r\n
-        */
-        send("{\"%s\":\"%s\"}\r\n", key, value);
+    template<typename T>
+    void sendSetting(const char* key, T& value) {
+        StaticJsonDocument<128> _doc;
+        char _out[128];
+
+        const std::type_info& typeInfo = typeid(variable);
+
+        if (typeInfo == typeid(int)) {
+            int value = static_cast<int>(variable);
+            // Do something with 'value' as an integer
+        }
+        else if (typeInfo == typeid(float)) {
+            float value = static_cast<float>(variable);
+            // Do something with 'value' as a float
+        }
+        else if (typeInfo == typeid(bool)) {
+            bool value = static_cast<bool>(variable);
+            // Do something with 'value' as a boolean
+        }
+        else if (typeInfo == typeid(const char*)) {
+            const char* value = static_cast<const char*>(variable);
+            // Do something with 'value' as a const char*
+        }
+        // Add more conditions for other types as needed
+        else {
+            // Handle unsupported types or fallback behavior
+        }
+
+        _doc[key] = value;
+        serializeJson(_doc, _out);
+        send("%s\r\n", _out);
     }
 
-    void sendResponse(char *key, int value) {
-        /**
-         * Response format:
-         * {
-         * "[key]": "[value]"
-         * } \r\n
-        */
-        send("{\"%s\":\"%d\"}\r\n", key, value);
+    void sendSetting(const char* key, const float* value, size_t size) {
+        StaticJsonDocument<256> _doc;
+        JsonArray _settingArray = _doc.createNestedArray(_cmd);
+
+        for (size_t i=0; i<size; i++) {
+            _settingArray.add(value[i]);
+        }
+
+        char _out[96];
+        serializeJson(_doc, _out);
+        send("%s\r\n", _out);
     }
+
+    // void sendSetting(const char* key, float* value[3], size_t nRows, size_t nCols) {
+    //     StaticJsonDocument<192> _doc;
+    //     Serial.printf("Sending: %s\r\n", key);
+    //     JsonArray _settingArray = _doc.createNestedArray(key);
+    //     Serial.printf("Sending: %s\r\n", key);
+
+    //     for (size_t i=0; i<nRows; i++) {
+    //         for (size_t j=0; j<nCols; j++) {
+    //             _settingArray.add(value[i][j]);
+    //         }
+    //     }
+
+    //     char _out[192];
+    //     serializeJson(_doc, _out);
+    //     send("%s\r\n", _out);
+    // }
 
     // ---------------------
     // --- DATA MESSAGES ---
@@ -139,7 +200,7 @@ public:
 
     void sendEulerAngles(EulerMessage msg) {
         // Euler Angles Message Format: "A,timestamp (µs),roll,pitch,yaw\r\n"
-        send("%c,%lu,%0.4f,%0.4f,%0.4f\r\n", 'A', msg.timestamp, msg.roll, msg.pitch, msg.yaw);
+        send("A,%lu,%0.4f,%0.4f,%0.4f\r\n", msg.timestamp, msg.roll, msg.pitch, msg.yaw);
     }
 
     void sendBattery(BatteryMessage msg) {
@@ -157,7 +218,7 @@ public:
         send("N,%lu,%s\r\n", micros(), note);
     }
 
-    void sendError(char *error) {
+    void sendError(const char *error) {
         // Error Message Format: "F,timestamp (µs),errorMessage\r\n"
         send("F,%lu,%s\r\n", micros(), error);
     }
@@ -166,12 +227,18 @@ protected:
     Stream* _serialPort = nullptr;
     bool _isActive = false;
     ValueType _valueType;
-    const char* _cmd; 
-    const char* _value;
+    char _cmd[64];
+    JsonVariant _value;
 
     ValueType parseValueType(char c);
     void print(const char *line);
     void send(const char* message, ...);
+
+private:
+    const char* _stringValue;
+    int _intValue;
+    float _floatValue;
+    // float _floatValueArray[];
 };
 
 extern xioAPI xioapi;

@@ -36,7 +36,7 @@ ThetisAPI api;
  * 
  * @override super::strobe()
 */
-void ThetisAPI::strobe() {
+void ThetisAPI::cmdStrobe() {
     // TODO: Send acknowledgement message
     uint32_t startTime = millis();
     while((millis() - startTime) <= 5000) // Blink white for 5 seconds
@@ -52,7 +52,7 @@ void ThetisAPI::strobe() {
  * @param colorString the hexadecimal string representation of the RGB color
  * @override super::color()
 */
-void ThetisAPI::colour(const char* colorString) {
+void ThetisAPI::cmdColour(const char* colorString) {
     if (colorString == nullptr) {
         // TODO: Set the LED behavior flag back to NORMAL.
     }
