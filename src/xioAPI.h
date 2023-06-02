@@ -111,68 +111,46 @@ public:
         send("%s\r\n", _out);
     }
 
-    template<typename T>
-    void sendSetting(const char* key, T& value) {
-        StaticJsonDocument<128> _doc;
-        char _out[128];
-
-        const std::type_info& typeInfo = typeid(variable);
-
-        if (typeInfo == typeid(int)) {
-            int value = static_cast<int>(variable);
-            // Do something with 'value' as an integer
-        }
-        else if (typeInfo == typeid(float)) {
-            float value = static_cast<float>(variable);
-            // Do something with 'value' as a float
-        }
-        else if (typeInfo == typeid(bool)) {
-            bool value = static_cast<bool>(variable);
-            // Do something with 'value' as a boolean
-        }
-        else if (typeInfo == typeid(const char*)) {
-            const char* value = static_cast<const char*>(variable);
-            // Do something with 'value' as a const char*
-        }
-        // Add more conditions for other types as needed
-        else {
-            // Handle unsupported types or fallback behavior
-        }
-
-        _doc[key] = value;
-        serializeJson(_doc, _out);
-        send("%s\r\n", _out);
-    }
-
-    void sendSetting(const char* key, const float* value, size_t size) {
+    void sendSetting(const char* key, const settingTableEntry* entry) {
         StaticJsonDocument<256> _doc;
-        JsonArray _settingArray = _doc.createNestedArray(_cmd);
+        char _out[256];
 
-        for (size_t i=0; i<size; i++) {
-            _settingArray.add(value[i]);
+        SettingType _entryType = entry->type;
+        void* _entryValue = entry->value;
+        JsonArray _settingArray;
+        const float* _array;
+
+        switch (_entryType) {
+            case BOOL:
+                _doc[key] = *(bool*) _entryValue;
+                break;
+            case CHAR:
+                _doc[key] = *(uint8_t*) _entryValue;
+                break;
+            case FLOAT:
+                _doc[key] = *(float*) _entryValue;
+                break;
+            case INT:
+                _doc[key] = *(int*) _entryValue;
+                break;
+            case FLOAT_ARRAY:
+                _settingArray = _doc.createNestedArray(_cmd);
+                _array = static_cast<const float*>(_entryValue);
+                for (size_t i=0; i<entry->len; i++) {
+                    _settingArray.add(_array[i]);
+                }
+                break;
+            case CHAR_ARRAY:
+                _doc[key] = (const char*) _entryValue;
+                break;
+            default:
+                return;
         }
 
-        char _out[96];
         serializeJson(_doc, _out);
         send("%s\r\n", _out);
     }
 
-    // void sendSetting(const char* key, float* value[3], size_t nRows, size_t nCols) {
-    //     StaticJsonDocument<192> _doc;
-    //     Serial.printf("Sending: %s\r\n", key);
-    //     JsonArray _settingArray = _doc.createNestedArray(key);
-    //     Serial.printf("Sending: %s\r\n", key);
-
-    //     for (size_t i=0; i<nRows; i++) {
-    //         for (size_t j=0; j<nCols; j++) {
-    //             _settingArray.add(value[i][j]);
-    //         }
-    //     }
-
-    //     char _out[192];
-    //     serializeJson(_doc, _out);
-    //     send("%s\r\n", _out);
-    // }
 
     // ---------------------
     // --- DATA MESSAGES ---

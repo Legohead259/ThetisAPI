@@ -60,11 +60,18 @@ ValueType xioAPI::parseValueType(char c) {
 bool xioAPI::checkForCommand() {
     char buffer[256];
     StaticJsonDocument<128> doc;
+    int lenAvailable = _serialPort->available();
 
-    if (_serialPort->available() > 0) { //  Check for xio API Command Messages
+    if (lenAvailable == 0) {
+        return false;
+    }
+
+    while (_serialPort->available() > 0) { //  Check for xio API Command Messages
         // Read the incoming bytes
+        // _serialPort->println(_serialPort->available()); // DEBUG
         int blen = _serialPort->readBytesUntil(TERMINAL, buffer, BUFFER_SIZE);
-
+        // _serialPort->println(_serialPort->available()); // DEBUG
+        // _serialPort->println(blen); // DEBUG
         DeserializationError error = deserializeJson(doc, buffer, blen);
 
         if (error) {
@@ -79,18 +86,13 @@ bool xioAPI::checkForCommand() {
             JsonVariant _value = kv.value();
         }
 
-        return true;
+        handleCommand(_cmd);
     }
-    else {
-        // doc.clear();
-        return false;
-    }
+    return true;
 }
 
 void xioAPI::handleCommand(const char* cmdPtr) {
-    // Serial.println(cmdPtr); // DEBUG
     uint32_t cmdHash = hash(cmdPtr);
-    // Serial.println(cmdHash, HEX); // DEBUG
 
     using xioAPI_Protocol::APIKeyHashASCII;
 
@@ -98,28 +100,8 @@ void xioAPI::handleCommand(const char* cmdPtr) {
     const size_t numEntries = sizeof(settingTable) / sizeof(settingTable[0]);
     for (size_t i=0; i<numEntries; i++) { // Check all keys in the hash table
         if (settingTable[i].key == cmdHash) { // If the command key is present in the hash table, then it is a setting read/write
-            // Serial.println("Found hash value"); // DEBUG
-            // Serial.println(cmdPtr); // Debug
-            // Serial.println(_value.isNull());
             if (_value.isNull()) { // If the passed value was null, then it is a read command
-                const float* array;
-                switch (cmdHash) {
-                    case ACCELEROMETER_MISALIGNMENT: case GYROSCOPE_MISALIGNMENT: 
-                    case HIGHG_ACCELEROMETER_MISALIGNMENT: case SOFT_IRON_MATRIX:
-                        array = static_cast<const float*>(settingTable[i].value);
-                        sendSetting(cmdPtr, array, 9);
-                        break;
-                    case ACCELEROMETER_OFFSET: case ACCELEROMETER_SENSITIVITY:
-                    case GYROSCOPE_OFFSET: case GYROSCOPE_SENSITIVITY:
-                    case HIGHG_ACCELEROMETER_OFFSET: case HIGHG_ACCELEROMETER_SENSITIVITY:
-                    case HARD_IRON_OFFSET:
-                        array = static_cast<const float*>(settingTable[i].value);
-                        sendSetting(cmdPtr, array, 3);
-                        break;
-                    default:
-                        sendSetting(cmdPtr, settingTable[i].value);
-                        break;
-                }
+                sendSetting(cmdPtr, &settingTable[i]);
             }
             // else {
                 // updateSetting(cmdPtr, _value);
