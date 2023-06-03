@@ -70,7 +70,7 @@ enum APIKeyHashASCII {
     EXTERNAL_ANTENNAE_ENABLED                   = 0x6ABC8B5D,
     WIFI_REGION                                 = 0xD0E9C698,
     WIFI_MAC_ADDRESS                            = 0x6EB6736B,
-    WIFI_IP_ADDRESS                             = 0x69F3792B,
+    WIFI_IP_ADDRESS                             = 0x0DD70133,
     WIFI_CLIENT_SSID                            = 0xBCC58466,
     WIFI_CLIENT_KEY                             = 0x3443E7FC,
     WIFI_CLIENT_CHANNEL                         = 0xA16900CC,

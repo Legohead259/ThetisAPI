@@ -57,38 +57,30 @@ ValueType xioAPI::parseValueType(char c) {
     }
 }
 
-bool xioAPI::checkForCommand() {
+void xioAPI::checkForCommand() {
     char buffer[256];
-    StaticJsonDocument<128> doc;
-    int lenAvailable = _serialPort->available();
-
-    if (lenAvailable == 0) {
-        return false;
-    }
+    StaticJsonDocument<256> doc;
 
     while (_serialPort->available() > 0) { //  Check for xio API Command Messages
         // Read the incoming bytes
-        // _serialPort->println(_serialPort->available()); // DEBUG
         int blen = _serialPort->readBytesUntil(TERMINAL, buffer, BUFFER_SIZE);
-        // _serialPort->println(_serialPort->available()); // DEBUG
-        // _serialPort->println(blen); // DEBUG
         DeserializationError error = deserializeJson(doc, buffer, blen);
 
         if (error) {
-            return false;
+            Serial.println("Ran into error"); // DEBUG
+            Serial.println(error.c_str()); // DEBUG
+            return;
         }
 
         JsonObject root = doc.as<JsonObject>();
 
         for (JsonPair kv : root) {
             strcpy(_cmd, kv.key().c_str());
-            // Serial.printf("Got: %s\r\n", _cmd); // DEBUG
-            JsonVariant _value = kv.value();
+            _value = kv.value();
         }
 
         handleCommand(_cmd);
     }
-    return true;
 }
 
 void xioAPI::handleCommand(const char* cmdPtr) {
@@ -103,11 +95,13 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             if (_value.isNull()) { // If the passed value was null, then it is a read command
                 sendSetting(cmdPtr, &settingTable[i]);
             }
-            // else {
-                // updateSetting(cmdPtr, _value);
-                // sendSetting(cmdPtr, _value);
-            // }
-            return; // Exit function after handle
+            else {
+                updateSetting(&settingTable[i], _value);
+                sendSetting(cmdPtr, &settingTable[i]);
+            }
+            
+            // Exit function after handle
+            return;
         }
     }
 
@@ -118,9 +112,11 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             break;
         case APPLY:
             // TODO: ignore? Because I don't like??
+            ackApply();
             break;
         case SAVE:
-            // TODO: Save all settings to config file and send back message with same received JSON
+            saveConfigurations();
+            ackSave();
             break;
         case TIME:
             if (_value != nullptr) { // Assume that a WRITE command has been sent
@@ -156,7 +152,7 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             // TODO: Transmit data across the OTG serial bus and return the message
             break;
         case NOTE:
-            sendNotification(getValue());
+            sendNotification(getValue<const char*>());
             break;
         case FORMAT:
             // TODO: Format the data logging SD card and return the message
@@ -173,22 +169,10 @@ void xioAPI::handleCommand(const char* cmdPtr) {
         case ERASE:
             // TODO: Erase the config file and return the message
         default:
-            char _buf[48];
-            sprintf(_buf, "Did not recognize key: %lu", cmdHash);
+            char _buf[128];
+            sprintf(_buf, "Did not recognize key: %s as %lu", cmdPtr, cmdHash);
             sendError(_buf);
     }
-}
-
-const char* xioAPI::getCommand() {
-    return _cmd;
-}
-
-const char* xioAPI::getValue() {
-    return _value;
-}
-
-ValueType xioAPI::getValueType() {
-    return _valueType;
 }
 
 
@@ -216,6 +200,14 @@ void xioAPI::send(const char* message, ...) {
 	va_end(args);
 
 	print(buffer);
+}
+
+void xioAPI::clearCmd() {
+    memset(_cmd, 0, sizeof(_cmd));
+}
+
+void xioAPI::clearValue() {
+    _value.clear();
 }
 
 unsigned long xioAPI::hash(const char *str) {

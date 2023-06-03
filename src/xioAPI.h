@@ -35,12 +35,16 @@ using namespace xioAPI_Protocol;
 class xioAPI {
 public:
     bool begin(Stream* port);
-    bool checkForCommand();
+    void checkForCommand();
     void handleCommand(const char* cmdPtr);
-    const char* getCommand();
-    const char* getValue();
-    ValueType getValueType();
     unsigned long hash(const char *str);
+
+    const char* getCommand() { return _cmd; }
+    
+    template <typename T>
+    T getValue() { return _value.as<T>(); }
+
+    ValueType getValueType() { return _valueType; }
 
     // ------------------------------
     // --- USER-DEFINED FUNCTIONS ---
@@ -112,6 +116,8 @@ public:
     }
 
     void sendSetting(const char* key, const settingTableEntry* entry) {
+        // Setting format: {"[setting]":[value]}\r\n
+
         StaticJsonDocument<256> _doc;
         char _out[256];
 
@@ -151,6 +157,12 @@ public:
         send("%s\r\n", _out);
     }
 
+    // --------------------------------
+    // --- COMMAND ACKNOWLEDGEMENTS ---
+    // --------------------------------
+
+    void ackApply() { send("{\"apply\":null}\r\n"); }
+    void ackSave() { send("{\"save\":null}\r\n"); }
 
     // ---------------------
     // --- DATA MESSAGES ---
@@ -213,10 +225,8 @@ protected:
     void send(const char* message, ...);
 
 private:
-    const char* _stringValue;
-    int _intValue;
-    float _floatValue;
-    // float _floatValueArray[];
+    void clearCmd();
+    void clearValue();
 };
 
 extern xioAPI xioapi;

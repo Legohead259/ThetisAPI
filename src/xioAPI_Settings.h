@@ -256,29 +256,8 @@ const struct settingTableEntry settingTable[] = {
 static int settingTableSize = sizeof(settingTable) / sizeof(settingTable[0]);
 
 bool loadConfigurationsFromJSON(bool checkFile=false);
-void saveConfigurations();
-
-template<typename T>
-inline void updateSetting(const char* key, const T& value) {
-    // Serial.print("Key: "); Serial.print(key); 
-    // Serial.print(" Value: "); Serial.print(value);
-    // Serial.println();
-
-    if (_jsonConfigDoc.containsKey(key)) {
-        // Serial.println("Found key");
-        _jsonConfigDoc[key] = value; // Update value inside JSON buffer
-        // Serial.println(_jsonConfigDoc[key].as<T>());
-        loadConfigurationsFromJSON(); // Update settings struct
-        // Serial.println("Updated value");
-    }
-}
-
-// template<>
-// inline void updateSetting(const char* key, float (*value)[3][3]) {
-//     if (_jsonConfigDoc.containsKey(key)) {
-//         Serial.println("Got matrix");
-//     }
-// }
+bool saveConfigurations();
+void updateSetting(const settingTableEntry* entry, JsonVariant newValue);
 
 template <typename T>
 inline T getSetting(const char* key) {

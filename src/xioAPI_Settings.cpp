@@ -203,35 +203,68 @@ bool loadConfigurationsFromJSON(bool checkFile) {
     return true;
 }
 
-void saveConfigurations() {
-    // _file = SPIFFS.open(CONFIG_FILE_NAME, "w");
+bool saveConfigurations() {
+    _file = SPIFFS.open(CONFIG_FILE_NAME, "w");
 
-    // if (!_file) {
-    //     return false;
-    // }
+    if (!_file) {
+        return false;
+    }
 
-    // // Set the configuration settings in the JSON document
-    // // jsonDoc["calibrationDate"] = settings.calibrationDate;
-    // // jsonDoc["deviceName"] = settings.deviceName;
-    // // jsonDoc["serialNumber"] = settings.serialNumber;
+    // Set the configuration settings in the JSON document
+    _jsonConfigDoc["calibrationDate"] = settings.calibrationDate;
+    _jsonConfigDoc["deviceName"] = settings.deviceName;
+    _jsonConfigDoc["serialNumber"] = settings.serialNumber;
 
-    // // Serialize the JSON document to the file
-    // if (!serializeJson(jsonDoc, _file)) {
-    //     return false;
-    // }
+    // Serialize the JSON document to the file
+    if (!serializeJson(_jsonConfigDoc, _file)) {
+        return false;
+    }
 
-    // // Close the file and empty buffer
-    // _file.close();
-    // jsonDoc.clear();
+    // Close the file and empty buffer
+    _file.close();
+    _jsonConfigDoc.clear();
 
-    // return true;
+    return true;
 }
 
-// bool updateSetting(unsigned long keyHash, const T& value) {
+void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
+    bool* boolPtr;
+    uint8_t* uint8Ptr;
+    char* charPtr;
+    float* floatPtr;
+    int* intPtr;
 
-// }
+    switch (entry->type) {
+        case BOOL: 
+            boolPtr = static_cast<bool*>(entry->value); // Cast the value pointer to bool*
+            *boolPtr = newValue.as<bool>(); // Assign the new value to the setting value
+            break;
+        case CHAR: 
+            uint8Ptr = static_cast<uint8_t*>(entry->value); // Cast the value pointer to uint8_t*
+            *uint8Ptr = newValue.as<uint8_t>(); // Assign the new value to the setting value
+            break;
+        case FLOAT: 
+            floatPtr = static_cast<float*>(entry->value); // Cast the value pointer to float*
+            *floatPtr = newValue.as<float>(); // Assign the new value to the setting value
+            break;
+        case INT: 
+            intPtr = static_cast<int*>(entry->value); // Cast the value pointer to int*
+            *intPtr = newValue.as<int>(); // Assign the new value to the setting value
+            break;
+        case FLOAT_ARRAY:
+            floatPtr = static_cast<float*>(entry->value); // Cast the value pointer to float*
+            for (size_t i=0; i<entry->len; i++) { // Copy the new array values to the setting value
+                floatPtr[i] = newValue[i];
+            }
+            break;
+        case CHAR_ARRAY:
+            charPtr = static_cast<char*>(entry->value); // Cast the value pointer to char*
+            strncpy(charPtr, newValue, entry->len - 1); // Copy the new value to the setting value
+            charPtr[entry->len - 1] = '\0'; // Null-terminate the string
+            break;
+        default:
+            return;
+    }
+}
 
-// void updateSetting(const char* key, float* value[][]) {
-//     Serial.println("Got matrix");
-// }
 
