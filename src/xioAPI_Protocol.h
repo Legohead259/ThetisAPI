@@ -50,7 +50,7 @@ enum APIKeyHashASCII {
     ACCELEROMETER_SENSITIVITY                   = 0x5B35E82B,
     ACCELEROMETER_OFFSET                        = 0x1E93C927,
     SOFT_IRON_MATRIX                            = 0x48A77FAE,
-    HARD_IRON_MATRIX                            = 0x604CAF63,
+    HARD_IRON_OFFSET                            = 0x604CAF63,
     HIGHG_ACCELEROMETER_MISALIGNMENT            = 0xA3C1348F,
     HIGHG_ACCELEROMETER_SENSITIVITY             = 0xFB24E832,
     HIGHG_ACCELEROMETER_OFFSET                  = 0x0749E8CE,
@@ -67,10 +67,10 @@ enum APIKeyHashASCII {
     SERIAL_ACCESSORY_TIMEOUT                    = 0x526AD0D8,
     WIRELESS_MODE                               = 0xADA4E258,
     WIRELESS_FIRMWARE_VERSION                   = 0x7B099616,
-    EXTERNAL_ANTENNA_ENABLED                    = 0x7CDBF0F8,
+    EXTERNAL_ANTENNAE_ENABLED                   = 0x6ABC8B5D,
     WIFI_REGION                                 = 0xD0E9C698,
     WIFI_MAC_ADDRESS                            = 0x6EB6736B,
-    WIFI_IP_ADDRESS                             = 0x69F3792B,
+    WIFI_IP_ADDRESS                             = 0x0DD70133,
     WIFI_CLIENT_SSID                            = 0xBCC58466,
     WIFI_CLIENT_KEY                             = 0x3443E7FC,
     WIFI_CLIENT_CHANNEL                         = 0xA16900CC,
@@ -240,23 +240,34 @@ struct SensorData {
 };
 
 struct Ping {
-    char *interface;
-    char *deviceName;
-    char *serialNumber;
+    const char *interface;
+    const char *deviceName;
+    const char *serialNumber;
 };
 
-struct NetworkAnnouncement {
-    uint16_t sync;
+struct SelfTestResults {
+    bool eeprom;
+    bool rtc;
+    bool inertial;
+    bool magnetometer;
+    bool highGAccelerometer;
+    bool battery;
+    bool sdCard;
+    bool wireless;
+};
+
+typedef struct {
+    int sync;
     char *displayName;
     char *serialNumber;
     char *ipAddress;
-    uint16_t portTCP;
-    uint16_t sendUDP;
-    uint16_t receiveUDP;
+    int tcpPort;
+    int udpSendPort;
+    int udpReceivePort;
     uint8_t rssiPercentage;
     uint8_t batteryPercentage;
     uint8_t chargingStatus;
-};
+} NetworkAnnouncement;
 }
 
 #endif // xioAPI_Protocol_h

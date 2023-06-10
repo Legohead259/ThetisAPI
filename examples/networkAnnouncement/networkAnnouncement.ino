@@ -35,9 +35,9 @@ void setup() {
   na.displayName = "Arduino";
   na.serialNumber = "0123-4567-89AB";
   na.ipAddress = "198.168.1.1";
-  na.portTCP = 6000;
-  na.sendUDP = 7000;
-  na.receiveUDP = 8000;
+  na.tcpPort = 6000;
+  na.udpSendPort = 7000;
+  na.udpReceivePort = 8000;
   na.rssiPercentage = 85;
   na.batteryPercentage = 50;
   na.chargingStatus = DISCONNECTED;   //  ChargingStatus type in xIMU3_Types.h
