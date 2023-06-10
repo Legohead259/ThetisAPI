@@ -28,9 +28,12 @@
 #include "xioAPI_Types.h"
 #include "xioAPI_Settings.h"
 #include "xioAPI_Protocol.h"
+#include "TimeLib.h" 
 
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
+
+typedef void (*CallbackFunction)();
 
 class xioAPI {
 public:
@@ -46,123 +49,55 @@ public:
 
     ValueType getValueType() { return _valueType; }
 
-    // ------------------------------
-    // --- USER-DEFINED FUNCTIONS ---
-    // ------------------------------
-
-    virtual void cmdStrobe() { return; }
-    virtual void cmdColour(const char* colorString) { return; }
-    virtual void cmdHeading(float heading) { return; }
-
     // ------------------------
     // --- COMMAND MESSAGES ---
     // ------------------------
 
-    void sendNetworkAnnouncement(NetworkAnnouncement na) {
-        /**
-         * Network announcement format:
-         * {
-         * "sync": [sync],
-         * "name": "[displayName]",
-         * "sn": "[serialNumber]",
-         * "ip": "[ipAddress]",
-         * "port": [tcpPort],
-         * "send": [udpSendPort],
-         * "receive": [udpReceivePort],
-         * "rssi": [wiFiRSSI]
-         * "battery": [batteryPercentage],
-         * "status": [chargingStatus]
-         * }\r\n
-        */
-        StaticJsonDocument<256> _doc;
-        char _out[256];
+    void sendSetting(const char* key, const settingTableEntry* entry);
+    void sendApplyAck() { send(true, "{\"apply\":null}"); }
+    void sendSaveAck() { send(true, "{\"save\":null}"); }
+    void sendPing(Ping ping);
+    void sendSelfTestResults(SelfTestResults results);
+    void sendNetworkAnnouncement(NetworkAnnouncement na);
 
-        _doc["sync"] = na.sync;
-        _doc["name"] = na.displayName;
-        _doc["sn"] = na.serialNumber;
-        _doc["ip"] = na.ipAddress;
-        _doc["port"] = na.tcpPort;
-        _doc["send"] = na.udpSendPort;
-        _doc["receive"] = na.udpReceivePort;
-        _doc["rssi"] = na.rssiPercentage;
-        _doc["battery"] = na.batteryPercentage;
-        _doc["status"] = na.chargingStatus;
+    // Update the internal system time with passed _value. NOTE: `cmdWriteTimeCallbackPtr` must be user-defined before called.
+    void cmdWriteTime() { executeUserDefinedCommand(cmdWriteTimeCallbackPtr); }
+    
+    // Send the internal system time. NOTE: `cmdReadTimeCallbackPtr` must be user-defined before called.
+    void sendTime() { executeUserDefinedCommand(cmdReadTimeCallbackPtr); }
+    
+    // Soft resets the device. NOTE: `cmdResetCallbackPtr` must be user-defined before called.
+    void cmdReset() { executeUserDefinedCommand(cmdResetCallbackPtr); }
 
-        serializeJson(_doc, _out);
-        send("%s\r\n", _out);
-    }
+    // Shuts down the device. NOTE: `cmdShutdownCallbackPtr` must be user-defined before called.
+    void cmdShutdown() { executeUserDefinedCommand(cmdShutdownCallbackPtr); }
 
-    void sendPing(Ping ping) {
-        /**
-         * Ping format:
-         * {
-         * "ping": {
-         *      "interface": "[interface]",
-         *      "deviceName": "[deviceName]",
-         *      "serialNumber": "[serialNumber]"
-         * }
-         * }\r\n
-        */
-        StaticJsonDocument<96> _doc;
-        char _out[96];
+    // Flashes the onboard LED white for 5-seconds. NOTE: `cmdStrobeCallbackPtr` must be user-defined before called.
+    void cmdStrobe() { executeUserDefinedCommand(cmdStrobeCallbackPtr); }
 
-        JsonObject root = _doc.createNestedObject("ping");
-        root["interface"] = "USB";
-        root["deviceName"] = "Thetis";
-        root["serialNumber"] = "Unknown";
+    // Sets the onboard LED to the specified color. NOTE: `cmdColourCallbackPtr` must be user-defined before called.
+    void cmdColour() { executeUserDefinedCommand(cmdColourCallbackPtr); }
 
-        serializeJson(_doc, _out);
-        send("%s\r\n", _out);
-    }
+    // Resets the AHRS heading to the specified value. NOTE: `cmdHeadingCallbackPtr` must be user-defined before called.
+    void cmdHeading() { executeUserDefinedCommand(cmdHeadingCallbackPtr); }
 
-    void sendSetting(const char* key, const settingTableEntry* entry) {
-        // Setting format: {"[setting]":[value]}\r\n
+    // Sends a specified message to the Serial accessory device. NOTE: `cmdSerialAccessoryCallbackPtr` must be user-defined before called.
+    void cmdSerialAccessory() { executeUserDefinedCommand(cmdSerialAccessoryCallbackPtr); }
 
-        StaticJsonDocument<256> _doc;
-        char _out[256];
+    // Formats the device storage to FAT32 - ERASES ALL DATA. NOTE: `cmdFormatCallbackPtr` must be user-defined before called.
+    void cmdFormat() { executeUserDefinedCommand(cmdFormatCallbackPtr); }
 
-        SettingType _entryType = entry->type;
-        void* _entryValue = entry->value;
-        JsonArray _settingArray;
-        const float* _array;
+    // Puts the device into a self-test diagnostic mode. NOTE: `cmdSelfTestCallbackPtr` must be user-defined before called.
+    void cmdSelfTest() { executeUserDefinedCommand(cmdSelfTestCallbackPtr); }
 
-        switch (_entryType) {
-            case BOOL:
-                _doc[key] = *(bool*) _entryValue;
-                break;
-            case CHAR:
-                _doc[key] = *(uint8_t*) _entryValue;
-                break;
-            case FLOAT:
-                _doc[key] = *(float*) _entryValue;
-                break;
-            case INT:
-                _doc[key] = *(int*) _entryValue;
-                break;
-            case FLOAT_ARRAY:
-                _settingArray = _doc.createNestedArray(_cmd);
-                _array = static_cast<const float*>(_entryValue);
-                for (size_t i=0; i<entry->len; i++) {
-                    _settingArray.add(_array[i]);
-                }
-                break;
-            case CHAR_ARRAY:
-                _doc[key] = (const char*) _entryValue;
-                break;
-            default:
-                return;
-        }
+    // Puts the device into the bootloader mode. NOTE: `cmdBootloaderCallbackPtr` must be user-defined before called.
+    void cmdBootloader() { executeUserDefinedCommand(cmdBootloaderCallbackPtr); }
 
-        serializeJson(_doc, _out);
-        send("%s\r\n", _out);
-    }
+    // Puts the device into a factory mode where READ-ONLY settings can be written. NOTE: `cmdFactoryCallbackPtr` must be user-defined before called.
+    void cmdFactory() { executeUserDefinedCommand(cmdFactoryCallbackPtr); }
 
-    // --------------------------------
-    // --- COMMAND ACKNOWLEDGEMENTS ---
-    // --------------------------------
-
-    void ackApply() { send("{\"apply\":null}\r\n"); }
-    void ackSave() { send("{\"save\":null}\r\n"); }
+    // Erases the device's EEPROM storage. NOTE: `cmdEraseCallbackPtr` must be user-defined before called.
+    void cmdErase() { executeUserDefinedCommand(cmdEraseCallbackPtr); }
 
     // ---------------------
     // --- DATA MESSAGES ---
@@ -170,48 +105,66 @@ public:
 
     void sendInertial(InertialMessage msg) {
         // Inertial Message Format: "I,timestamp (µs),gx,gy,gz,ax,ay,az\r\n"
-        send("I,%lu,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f\r\n", msg.timestamp, msg.gx, msg.gy, msg.gz, msg.ax, msg.ay, msg.az);
+        send(true, "I,%lu,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.gx, msg.gy, msg.gz, msg.ax, msg.ay, msg.az);
     }
 
     void sendMag(MagnetoMessage msg) {
         // Magnetometer Message Format: "M,timestamp (µs),mx,my,mz\r\n"
-        send("M,%lu,%0.4f,%0.4f,%0.4f\r\n", msg.timestamp, msg.mx, msg.my, msg.mz);
+        send(true, "M,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.mx, msg.my, msg.mz);
     }
 
     void sendTemperature(TemperatureMessage msg) {
         // Temperature Message Format: "T,timestamp (µs),temperature (°C)\r\n"
-        send("T,%lu,%0.4f\r\n", msg.timestamp, msg.temp);
+        send(true, "T,%lu,%0.4f", msg.timestamp, msg.temp);
     }
 
     void sendQuaternion(QuaternionMessage msg) {
         // Quaternion Message Format: "Q,timestamp (µs),w,x,y,z\r\n"
-        send("Q,%lu,%0.4f,%0.4f,%0.4f,%0.4f\r\n", msg.timestamp, msg.w, msg.x, msg.y, msg.z);
+        send(true, "Q,%lu,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.w, msg.x, msg.y, msg.z);
     }
 
     void sendEulerAngles(EulerMessage msg) {
         // Euler Angles Message Format: "A,timestamp (µs),roll,pitch,yaw\r\n"
-        send("A,%lu,%0.4f,%0.4f,%0.4f\r\n", msg.timestamp, msg.roll, msg.pitch, msg.yaw);
+        send(true, "A,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.roll, msg.pitch, msg.yaw);
     }
 
     void sendBattery(BatteryMessage msg) {
         // Battery Message Format: "B,timestamp (µs),percentCharged,voltage,status\r\n"
-        send("B,%lu,%0.4f,%0.4f,%u\r\n", msg.timestamp, msg.percentCharged, msg.voltage, msg.status);
+        send(true, "B,%lu,%0.4f,%0.4f,%u", msg.timestamp, msg.percentCharged, msg.voltage, msg.status);
     }
 
     void sendRSSI(RSSIMessage msg) {
         // RSSI Message Format: "W,timestamp (µs),percent,power (dBm)\r\n"
-        send("W,%lu,%0.4f,%0.4f\r\n", msg.timestamp, msg.percentage, msg.power);
+        send(true, "W,%lu,%0.4f,%0.4f", msg.timestamp, msg.percentage, msg.power);
     }
 
     void sendNotification(const char *note) {
         // Notification Message Format: "N,timestamp (µs),note\r\n"
-        send("N,%lu,%s\r\n", micros(), note);
+        send(true, "N,%lu,%s", micros(), note);
     }
 
     void sendError(const char *error) {
         // Error Message Format: "F,timestamp (µs),errorMessage\r\n"
-        send("F,%lu,%s\r\n", micros(), error);
+        send(true, "F,%lu,%s", micros(), error);
     }
+
+    // --------------------------------
+    // --- COMMAND CALLBACK SETTERS ---
+    // --------------------------------
+
+    void setCmdReadTimeCallback(CallbackFunction cbPtr) { cmdReadTimeCallbackPtr = cbPtr; }
+    void setCmdWriteTimeCallback(CallbackFunction cbPtr) { cmdWriteTimeCallbackPtr = cbPtr; }
+    void setCmdResetCallback(CallbackFunction cbPtr) { cmdResetCallbackPtr = cbPtr; }
+    void setCmdShutdownCallback(CallbackFunction cbPtr) { cmdShutdownCallbackPtr = cbPtr; }
+    void setCmdStrobeCallback(CallbackFunction cbPtr) { cmdStrobeCallbackPtr = cbPtr; }
+    void setCmdColourCallback(CallbackFunction cbPtr) { cmdColourCallbackPtr = cbPtr; }
+    void setCmdHeadingCallback(CallbackFunction cbPtr) { cmdHeadingCallbackPtr = cbPtr; }
+    void setCmdSerialAccessoryCallback(CallbackFunction cbPtr) { cmdSerialAccessoryCallbackPtr = cbPtr; }
+    void setCmdFormatCallback(CallbackFunction cbPtr) { cmdFormatCallbackPtr = cbPtr; }
+    void setCmdSelfTestCallback(CallbackFunction cbPtr) { cmdSelfTestCallbackPtr = cbPtr; }
+    void setCmdBootloaderCallback(CallbackFunction cbPtr) { cmdBootloaderCallbackPtr = cbPtr; }
+    void setCmdFactoryCallback(CallbackFunction cbPtr) { cmdFactoryCallbackPtr = cbPtr; }
+    void setCmdEraseCallback(CallbackFunction cbPtr) { cmdEraseCallbackPtr = cbPtr; }
 
 protected:
     Stream* _serialPort = nullptr;
@@ -222,11 +175,26 @@ protected:
 
     ValueType parseValueType(char c);
     void print(const char *line);
-    void send(const char* message, ...);
+    void send(bool writeLineFeed, const char* message, ...);
 
 private:
     void clearCmd();
     void clearValue();
+    CallbackFunction cmdReadTimeCallbackPtr = nullptr;
+    CallbackFunction cmdWriteTimeCallbackPtr = nullptr;
+    CallbackFunction cmdResetCallbackPtr = nullptr;
+    CallbackFunction cmdShutdownCallbackPtr = nullptr;
+    CallbackFunction cmdStrobeCallbackPtr = nullptr;
+    CallbackFunction cmdColourCallbackPtr = nullptr;
+    CallbackFunction cmdHeadingCallbackPtr = nullptr;
+    CallbackFunction cmdSerialAccessoryCallbackPtr = nullptr;
+    CallbackFunction cmdFormatCallbackPtr = nullptr;
+    CallbackFunction cmdSelfTestCallbackPtr = nullptr;
+    CallbackFunction cmdBootloaderCallbackPtr = nullptr;
+    CallbackFunction cmdFactoryCallbackPtr = nullptr;
+    CallbackFunction cmdEraseCallbackPtr = nullptr;
+
+    void executeUserDefinedCommand(CallbackFunction cbPtr) {if (cbPtr != nullptr) cbPtr(); else return;}
 };
 
 extern xioAPI xioapi;

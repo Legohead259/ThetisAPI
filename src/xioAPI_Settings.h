@@ -59,11 +59,13 @@ using namespace xioAPI_Protocol;
 
 #if defined(XIOAPI_USE_SPIFFS) || defined(XIOAPI_USE_SD)
 #define CONFIG_FILE_NAME "/config.json"
+#define DEFAULT_CONFIG_FILE_NAME "/default.json"
 #define CONFIG_FILE_BUFFER_SIZE 6144 // Bytes - as recommended by the ArduinoJson helper (minimum: 3200)
 #endif // defined(XIOAPI_USE_SPIFFS) || defined(XIOAPI_USE_SD)
 
 extern File _file; // Create an object to hold the information for the JSON configuration file
 extern StaticJsonDocument<6144> _jsonConfigDoc; // Allocate a buffer to hold the JSON data
+extern bool _factoryMode;
 
 
 // ============================
@@ -255,7 +257,7 @@ const struct settingTableEntry settingTable[] = {
 
 static int settingTableSize = sizeof(settingTable) / sizeof(settingTable[0]);
 
-bool loadConfigurationsFromJSON(bool checkFile=false);
+bool loadConfigurationsFromJSON(bool checkFile=false, const char* filename=CONFIG_FILE_NAME);
 bool saveConfigurations();
 void updateSetting(const settingTableEntry* entry, JsonVariant newValue);
 

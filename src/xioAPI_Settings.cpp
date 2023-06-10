@@ -27,10 +27,11 @@
 File _file;
 StaticJsonDocument<6144> _jsonConfigDoc;
 device_settings_t settings;
+bool _factoryMode = false;
 
-bool loadConfigurationsFromJSON(bool checkFile) {
+bool loadConfigurationsFromJSON(bool checkFile, const char* filename) {
     if (checkFile) {
-        _file = SPIFFS.open(CONFIG_FILE_NAME, "r");
+        _file = SPIFFS.open(filename, "r");
         if (!_file) {
             return false;
         }
@@ -49,83 +50,37 @@ bool loadConfigurationsFromJSON(bool checkFile) {
     strcpy(settings.calibrationDate, _jsonConfigDoc["calibrationDate"]); // "Unknown"
 
     JsonArray gyroscopeMisalignment = _jsonConfigDoc["gyroscopeMisalignment"];
-    settings.gyroscopeMisalignment[0] = gyroscopeMisalignment[0]; // 1
-    settings.gyroscopeMisalignment[1] = gyroscopeMisalignment[1]; // 0
-    settings.gyroscopeMisalignment[2] = gyroscopeMisalignment[2]; // 0
-    settings.gyroscopeMisalignment[3] = gyroscopeMisalignment[3]; // 0
-    settings.gyroscopeMisalignment[4] = gyroscopeMisalignment[4]; // 1
-    settings.gyroscopeMisalignment[5] = gyroscopeMisalignment[5]; // 0
-    settings.gyroscopeMisalignment[6] = gyroscopeMisalignment[6]; // 0
-    settings.gyroscopeMisalignment[7] = gyroscopeMisalignment[7]; // 0
-    settings.gyroscopeMisalignment[8] = gyroscopeMisalignment[8]; // 1
+    for (size_t i=0; i<9; i++) { settings.gyroscopeMisalignment[i] = gyroscopeMisalignment[i]; }
 
     JsonArray gyroscopeSensitivity = _jsonConfigDoc["gyroscopeSensitivity"];
-    settings.gyroscopeSensitivity[0] = gyroscopeSensitivity[0]; // 1
-    settings.gyroscopeSensitivity[1] = gyroscopeSensitivity[1]; // 1
-    settings.gyroscopeSensitivity[2] = gyroscopeSensitivity[2]; // 1
+    for (size_t i=0; i<3; i++) { settings.gyroscopeSensitivity[i] = gyroscopeSensitivity[i]; }
 
     JsonArray gyroscopeOffset = _jsonConfigDoc["gyroscopeOffset"];
-    settings.gyroscopeOffset[0] = gyroscopeOffset[0]; // 0
-    settings.gyroscopeOffset[1] = gyroscopeOffset[1]; // 0
-    settings.gyroscopeOffset[2] = gyroscopeOffset[2]; // 0
+    for (size_t i=0; i<9; i++) { settings.gyroscopeOffset[i] = gyroscopeOffset[i]; }
 
     JsonArray accelerometerMisalignment = _jsonConfigDoc["accelerometerMisalignment"];
-    settings.accelerometerMisalignment[0] = accelerometerMisalignment[0]; // 1
-    settings.accelerometerMisalignment[1] = accelerometerMisalignment[1]; // 0
-    settings.accelerometerMisalignment[2] = accelerometerMisalignment[2]; // 0
-    settings.accelerometerMisalignment[3] = accelerometerMisalignment[3]; // 0
-    settings.accelerometerMisalignment[4] = accelerometerMisalignment[4]; // 1
-    settings.accelerometerMisalignment[5] = accelerometerMisalignment[5]; // 0
-    settings.accelerometerMisalignment[6] = accelerometerMisalignment[6]; // 0
-    settings.accelerometerMisalignment[7] = accelerometerMisalignment[7]; // 0
-    settings.accelerometerMisalignment[8] = accelerometerMisalignment[8]; // 1
+    for (size_t i=0; i<9; i++) { settings.accelerometerMisalignment[i] = accelerometerMisalignment[i]; }
 
     JsonArray accelerometerSensitivity = _jsonConfigDoc["accelerometerSensitivity"];
-    settings.accelerometerSensitivity[0] = accelerometerSensitivity[0]; // 1
-    settings.accelerometerSensitivity[1] = accelerometerSensitivity[1]; // 1
-    settings.accelerometerSensitivity[2] = accelerometerSensitivity[2]; // 1
+    for (size_t i=0; i<9; i++) { settings.accelerometerSensitivity[i] = accelerometerSensitivity[i]; }
 
     JsonArray accelerometerOffset = _jsonConfigDoc["accelerometerOffset"];
-    settings.accelerometerOffset[0] = accelerometerOffset[0]; // 0
-    settings.accelerometerOffset[1] = accelerometerOffset[1]; // 0
-    settings.accelerometerOffset[2] = accelerometerOffset[2]; // 0
+    for (size_t i=0; i<9; i++) { settings.accelerometerOffset[i] = accelerometerOffset[i]; }
 
     JsonArray softIronMatrix = _jsonConfigDoc["softIronMatrix"];
-    settings.softIronMatrix[0] = softIronMatrix[0]; // 1
-    settings.softIronMatrix[1] = softIronMatrix[1]; // 0
-    settings.softIronMatrix[2] = softIronMatrix[2]; // 0
-    settings.softIronMatrix[3] = softIronMatrix[3]; // 0
-    settings.softIronMatrix[4] = softIronMatrix[4]; // 1
-    settings.softIronMatrix[5] = softIronMatrix[5]; // 0
-    settings.softIronMatrix[6] = softIronMatrix[6]; // 0
-    settings.softIronMatrix[7] = softIronMatrix[7]; // 0
-    settings.softIronMatrix[8] = softIronMatrix[8]; // 1
+    for (size_t i=0; i<9; i++) { settings.softIronMatrix[i] = softIronMatrix[i]; }
 
     JsonArray hardIronOffset = _jsonConfigDoc["hardIronOffset"];
-    settings.hardIronOffset[0] = hardIronOffset[0]; // 0
-    settings.hardIronOffset[1] = hardIronOffset[1]; // 0
-    settings.hardIronOffset[2] = hardIronOffset[2]; // 0
+    for (size_t i=0; i<9; i++) { settings.hardIronOffset[i] = hardIronOffset[i]; }
 
     JsonArray highGAccelerometerMisalignment = _jsonConfigDoc["highGAccelerometerMisalignment"];
-    settings.highGAccelerometerMisalignment[0] = highGAccelerometerMisalignment[0]; // 1
-    settings.highGAccelerometerMisalignment[1] = highGAccelerometerMisalignment[1]; // 0
-    settings.highGAccelerometerMisalignment[2] = highGAccelerometerMisalignment[2]; // 0
-    settings.highGAccelerometerMisalignment[3] = highGAccelerometerMisalignment[3]; // 0
-    settings.highGAccelerometerMisalignment[4] = highGAccelerometerMisalignment[4]; // 1
-    settings.highGAccelerometerMisalignment[5] = highGAccelerometerMisalignment[5]; // 0
-    settings.highGAccelerometerMisalignment[6] = highGAccelerometerMisalignment[6]; // 0
-    settings.highGAccelerometerMisalignment[7] = highGAccelerometerMisalignment[7]; // 0
-    settings.highGAccelerometerMisalignment[8] = highGAccelerometerMisalignment[8]; // 1
+    for (size_t i=0; i<9; i++) { settings.highGAccelerometerMisalignment[i] = highGAccelerometerMisalignment[i]; }
 
     JsonArray highGAccelerometerSensitivity = _jsonConfigDoc["highGAccelerometerSensitivity"];
-    settings.highGAccelerometerSensitivity[0] = highGAccelerometerSensitivity[0]; // 1
-    settings.highGAccelerometerSensitivity[1] = highGAccelerometerSensitivity[1]; // 1
-    settings.highGAccelerometerSensitivity[2] = highGAccelerometerSensitivity[2]; // 1
+    for (size_t i=0; i<9; i++) { settings.highGAccelerometerSensitivity[i] = highGAccelerometerSensitivity[i]; }
 
     JsonArray highGAccelerometerOffset = _jsonConfigDoc["highGAccelerometerOffset"];
-    settings.highGAccelerometerOffset[0] = highGAccelerometerOffset[0]; // 0
-    settings.highGAccelerometerOffset[1] = highGAccelerometerOffset[1]; // 0
-    settings.highGAccelerometerOffset[2] = highGAccelerometerOffset[2]; // 0
+    for (size_t i=0; i<9; i++) { settings.highGAccelerometerOffset[i] = highGAccelerometerOffset[i]; }
 
     strcpy(settings.deviceName,               _jsonConfigDoc["deviceName"]); // "x-IMU3"
     strcpy(settings.serialNumber,             _jsonConfigDoc["serialNumber"]); // "Unknown"
@@ -256,72 +211,72 @@ bool saveConfigurations() {
     for (size_t i=0; i<3; i++) { highGAccelerometerOffset.add(settings.highGAccelerometerOffset[i]); }
     _jsonConfigDoc["highGAccelerometerOffset"] = highGAccelerometerOffset;
 
-    _jsonConfigDoc["deviceName"] = settings.deviceName;
-    _jsonConfigDoc["serialNumber"] = settings.serialNumber;
-    _jsonConfigDoc["firmwareVersion"] = settings.firmwareVersion;
-    _jsonConfigDoc["bootloaderVersion"] = settings.bootloaderVersion;
-    _jsonConfigDoc["hardwareVersion"] = settings.hardwareVersion;
-    _jsonConfigDoc["serialBaudRate"] = settings.serialBaudRate;
-    _jsonConfigDoc["serialRtsCtsEnabled"] = settings.serialRtsCtsEnabled;
-    _jsonConfigDoc["serialAccessoryNumberOfBytes"] = settings.serialAccessoryNumberOfBytes;
-    _jsonConfigDoc["serialAccessoryTerminationByte"] = settings.serialAccessoryTerminationByte;
-    _jsonConfigDoc["serialAccessoryTimeout"] = settings.serialAccessoryTimeout;
-    _jsonConfigDoc["wirelessMode"] = settings.wirelessMode;
-    _jsonConfigDoc["wirelessFirmwareVersion"] = settings.wirelessFirmwareVersion;
-    _jsonConfigDoc["externalAntennaeEnabled"] = settings.externalAntennaeEnabled;
-    _jsonConfigDoc["wiFiRegion"] = settings.wiFiRegion;
-    _jsonConfigDoc["wiFiMacAddress"] = settings.wiFiMacAddress;
-    _jsonConfigDoc["wiFiIPAddress"] = settings.wiFiIPAddress;
-    _jsonConfigDoc["wiFiClientSsid"] = settings.wiFiClientSsid;
-    _jsonConfigDoc["wiFiClientKey"] = settings.wiFiClientKey;
-    _jsonConfigDoc["wiFiClientChannel"] = settings.wiFiClientChannel;
-    _jsonConfigDoc["wiFiClientDhcpEnabled"] = settings.wiFiClientDhcpEnabled;
-    _jsonConfigDoc["wiFiClientIPAddress"] = settings.wiFiClientIPAddress;
-    _jsonConfigDoc["wiFiClientNetmask"] = settings.wiFiClientNetmask;
-    _jsonConfigDoc["wiFiClientGateway"] = settings.wiFiClientGateway;
-    _jsonConfigDoc["wiFiAPSsid"] = settings.wiFiAPSsid;
-    _jsonConfigDoc["wiFiAPKey"] = settings.wiFiAPKey;
-    _jsonConfigDoc["wiFiAPChannel"] = settings.wiFiAPChannel;
-    _jsonConfigDoc["tcpPort"] = settings.tcpPort;
-    _jsonConfigDoc["udpIPAddress"] = settings.udpIPAddress;
-    _jsonConfigDoc["udpSendPort"] = settings.udpSendPort;
-    _jsonConfigDoc["udpReceivePort"] = settings.udpReceivePort;
-    _jsonConfigDoc["synchronisationEnabled"] = settings.synchronisationEnabled;
-    _jsonConfigDoc["synchronisationNetworkLatency"] = settings.synchronisationNetworkLatency;
-    _jsonConfigDoc["bluetoothAddress"] = settings.bluetoothAddress;
-    _jsonConfigDoc["bluetoothName"] = settings.bluetoothName;
-    _jsonConfigDoc["bluetoothPinCode"] = settings.bluetoothPinCode;
-    _jsonConfigDoc["bluetoothDiscoveryMode"] = settings.bluetoothDiscoveryMode;
-    _jsonConfigDoc["bluetoothPairedAddress"] = settings.bluetoothPairedAddress;
-    _jsonConfigDoc["bluetoothPairedLinkKey"] = settings.bluetoothPairedLinkKey;
-    _jsonConfigDoc["dataLoggerEnabled"] = settings.dataLoggerEnabled;
-    _jsonConfigDoc["dataLoggerFileNamePrefix"] = settings.dataLoggerFileNamePrefix;
-    _jsonConfigDoc["dataLoggerFileNameTimeEnabled"] = settings.dataLoggerFileNameTimeEnabled;
-    _jsonConfigDoc["dataLoggerFileNameCounterEnabled"] = settings.dataLoggerFileNameCounterEnabled;
-    _jsonConfigDoc["dataLoggerMaxFileSize"] = settings.dataLoggerMaxFileSize;
-    _jsonConfigDoc["dataLoggerMaxFilePeriod"] = settings.dataLoggerMaxFilePeriod;
-    _jsonConfigDoc["axesAlignment"] = settings.axesAlignment;
-    _jsonConfigDoc["gyroscopeOffsetCorrectionEnabled"] = settings.gyroscopeOffsetCorrectionEnabled;
-    _jsonConfigDoc["ahrsAxesConvention"] = settings.ahrsAxesConvention;
-    _jsonConfigDoc["ahrsGain"] = settings.ahrsGain;
-    _jsonConfigDoc["ahrsIgnoreMagnetometer"] = settings.ahrsIgnoreMagnetometer;
-    _jsonConfigDoc["ahrsAccelerationRejectionEnabled"] = settings.ahrsAccelerationRejectionEnabled;
-    _jsonConfigDoc["ahrsMagneticRejectionEnabled"] = settings.ahrsMagneticRejectionEnabled;
-    _jsonConfigDoc["binaryModeEnabled"] = settings.binaryModeEnabled;
-    _jsonConfigDoc["usbDataMessagesEnabled"] = settings.usbDataMessagesEnabled;
-    _jsonConfigDoc["serialDataMessagesEnabled"] = settings.serialDataMessagesEnabled;
-    _jsonConfigDoc["tcpDataMessagesEnabled"] = settings.tcpDataMessagesEnabled;
-    _jsonConfigDoc["udpDataMessagesEnabled"] = settings.udpDataMessagesEnabled;
-    _jsonConfigDoc["bluetoothDataMessagesEnabled"] = settings.bluetoothDataMessagesEnabled;
-    _jsonConfigDoc["dataLoggerDataMessagesEnabled"] = settings.dataLoggerDataMessagesEnabled;
-    _jsonConfigDoc["ahrsMessageType"] = settings.ahrsMessageType;
-    _jsonConfigDoc["inertialMessageRateDivisor"] = settings.inertialMessageRateDivisor;
-    _jsonConfigDoc["magnetometerMessageRateDivisor"] = settings.magnetometerMessageRateDivisor;
-    _jsonConfigDoc["ahrsMessageRateDivisor"] = settings.ahrsMessageRateDivisor;
-    _jsonConfigDoc["highGAccelerometerMessageRateDivisor"] = settings.highGAccelerometerMessageRateDivisor;
-    _jsonConfigDoc["temperatureMessageRateDivisor"] = settings.temperatureMessageRateDivisor;
-    _jsonConfigDoc["batteryMessageRateDivisor"] = settings.batteryMessageRateDivisor;
-    _jsonConfigDoc["rssiMessageRateDivisor"] = settings.rssiMessageRateDivisor;
+    _jsonConfigDoc["deviceName"]                            = settings.deviceName;
+    _jsonConfigDoc["serialNumber"]                          = settings.serialNumber;
+    _jsonConfigDoc["firmwareVersion"]                       = settings.firmwareVersion;
+    _jsonConfigDoc["bootloaderVersion"]                     = settings.bootloaderVersion;
+    _jsonConfigDoc["hardwareVersion"]                       = settings.hardwareVersion;
+    _jsonConfigDoc["serialBaudRate"]                        = settings.serialBaudRate;
+    _jsonConfigDoc["serialRtsCtsEnabled"]                   = settings.serialRtsCtsEnabled;
+    _jsonConfigDoc["serialAccessoryNumberOfBytes"]          = settings.serialAccessoryNumberOfBytes;
+    _jsonConfigDoc["serialAccessoryTerminationByte"]        = settings.serialAccessoryTerminationByte;
+    _jsonConfigDoc["serialAccessoryTimeout"]                = settings.serialAccessoryTimeout;
+    _jsonConfigDoc["wirelessMode"]                          = settings.wirelessMode;
+    _jsonConfigDoc["wirelessFirmwareVersion"]               = settings.wirelessFirmwareVersion;
+    _jsonConfigDoc["externalAntennaeEnabled"]               = settings.externalAntennaeEnabled;
+    _jsonConfigDoc["wiFiRegion"]                            = settings.wiFiRegion;
+    _jsonConfigDoc["wiFiMacAddress"]                        = settings.wiFiMacAddress;
+    _jsonConfigDoc["wiFiIPAddress"]                         = settings.wiFiIPAddress;
+    _jsonConfigDoc["wiFiClientSsid"]                        = settings.wiFiClientSsid;
+    _jsonConfigDoc["wiFiClientKey"]                         = settings.wiFiClientKey;
+    _jsonConfigDoc["wiFiClientChannel"]                     = settings.wiFiClientChannel;
+    _jsonConfigDoc["wiFiClientDhcpEnabled"]                 = settings.wiFiClientDhcpEnabled;
+    _jsonConfigDoc["wiFiClientIPAddress"]                   = settings.wiFiClientIPAddress;
+    _jsonConfigDoc["wiFiClientNetmask"]                     = settings.wiFiClientNetmask;
+    _jsonConfigDoc["wiFiClientGateway"]                     = settings.wiFiClientGateway;
+    _jsonConfigDoc["wiFiAPSsid"]                            = settings.wiFiAPSsid;
+    _jsonConfigDoc["wiFiAPKey"]                             = settings.wiFiAPKey;
+    _jsonConfigDoc["wiFiAPChannel"]                         = settings.wiFiAPChannel;
+    _jsonConfigDoc["tcpPort"]                               = settings.tcpPort;
+    _jsonConfigDoc["udpIPAddress"]                          = settings.udpIPAddress;
+    _jsonConfigDoc["udpSendPort"]                           = settings.udpSendPort;
+    _jsonConfigDoc["udpReceivePort"]                        = settings.udpReceivePort;
+    _jsonConfigDoc["synchronisationEnabled"]                = settings.synchronisationEnabled;
+    _jsonConfigDoc["synchronisationNetworkLatency"]         = settings.synchronisationNetworkLatency;
+    _jsonConfigDoc["bluetoothAddress"]                      = settings.bluetoothAddress;
+    _jsonConfigDoc["bluetoothName"]                         = settings.bluetoothName;
+    _jsonConfigDoc["bluetoothPinCode"]                      = settings.bluetoothPinCode;
+    _jsonConfigDoc["bluetoothDiscoveryMode"]                = settings.bluetoothDiscoveryMode;
+    _jsonConfigDoc["bluetoothPairedAddress"]                = settings.bluetoothPairedAddress;
+    _jsonConfigDoc["bluetoothPairedLinkKey"]                = settings.bluetoothPairedLinkKey;
+    _jsonConfigDoc["dataLoggerEnabled"]                     = settings.dataLoggerEnabled;
+    _jsonConfigDoc["dataLoggerFileNamePrefix"]              = settings.dataLoggerFileNamePrefix;
+    _jsonConfigDoc["dataLoggerFileNameTimeEnabled"]         = settings.dataLoggerFileNameTimeEnabled;
+    _jsonConfigDoc["dataLoggerFileNameCounterEnabled"]      = settings.dataLoggerFileNameCounterEnabled;
+    _jsonConfigDoc["dataLoggerMaxFileSize"]                 = settings.dataLoggerMaxFileSize;
+    _jsonConfigDoc["dataLoggerMaxFilePeriod"]               = settings.dataLoggerMaxFilePeriod;
+    _jsonConfigDoc["axesAlignment"]                         = settings.axesAlignment;
+    _jsonConfigDoc["gyroscopeOffsetCorrectionEnabled"]      = settings.gyroscopeOffsetCorrectionEnabled;
+    _jsonConfigDoc["ahrsAxesConvention"]                    = settings.ahrsAxesConvention;
+    _jsonConfigDoc["ahrsGain"]                              = settings.ahrsGain;
+    _jsonConfigDoc["ahrsIgnoreMagnetometer"]                = settings.ahrsIgnoreMagnetometer;
+    _jsonConfigDoc["ahrsAccelerationRejectionEnabled"]      = settings.ahrsAccelerationRejectionEnabled;
+    _jsonConfigDoc["ahrsMagneticRejectionEnabled"]          = settings.ahrsMagneticRejectionEnabled;
+    _jsonConfigDoc["binaryModeEnabled"]                     = settings.binaryModeEnabled;
+    _jsonConfigDoc["usbDataMessagesEnabled"]                = settings.usbDataMessagesEnabled;
+    _jsonConfigDoc["serialDataMessagesEnabled"]             = settings.serialDataMessagesEnabled;
+    _jsonConfigDoc["tcpDataMessagesEnabled"]                = settings.tcpDataMessagesEnabled;
+    _jsonConfigDoc["udpDataMessagesEnabled"]                = settings.udpDataMessagesEnabled;
+    _jsonConfigDoc["bluetoothDataMessagesEnabled"]          = settings.bluetoothDataMessagesEnabled;
+    _jsonConfigDoc["dataLoggerDataMessagesEnabled"]         = settings.dataLoggerDataMessagesEnabled;
+    _jsonConfigDoc["ahrsMessageType"]                       = settings.ahrsMessageType;
+    _jsonConfigDoc["inertialMessageRateDivisor"]            = settings.inertialMessageRateDivisor;
+    _jsonConfigDoc["magnetometerMessageRateDivisor"]        = settings.magnetometerMessageRateDivisor;
+    _jsonConfigDoc["ahrsMessageRateDivisor"]                = settings.ahrsMessageRateDivisor;
+    _jsonConfigDoc["highGAccelerometerMessageRateDivisor"]  = settings.highGAccelerometerMessageRateDivisor;
+    _jsonConfigDoc["temperatureMessageRateDivisor"]         = settings.temperatureMessageRateDivisor;
+    _jsonConfigDoc["batteryMessageRateDivisor"]             = settings.batteryMessageRateDivisor;
+    _jsonConfigDoc["rssiMessageRateDivisor"]                = settings.rssiMessageRateDivisor;
 
     // Serialize the JSON document to the file
     if (!serializeJson(_jsonConfigDoc, _file)) {
@@ -330,7 +285,6 @@ bool saveConfigurations() {
 
     // Close the file and empty buffer
     _file.close();
-    // _jsonConfigDoc.clear();
 
     return true;
 }
@@ -366,6 +320,7 @@ void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
             }
             break;
         case CHAR_ARRAY:
+            Serial.println("Updating CHAR ARRAY");
             charPtr = static_cast<char*>(entry->value); // Cast the value pointer to char*
             strncpy(charPtr, newValue, entry->len - 1); // Copy the new value to the setting value
             charPtr[entry->len - 1] = '\0'; // Null-terminate the string

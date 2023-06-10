@@ -245,6 +245,17 @@ struct Ping {
     const char *serialNumber;
 };
 
+struct SelfTestResults {
+    bool eeprom;
+    bool rtc;
+    bool inertial;
+    bool magnetometer;
+    bool highGAccelerometer;
+    bool battery;
+    bool sdCard;
+    bool wireless;
+};
+
 typedef struct {
     int sync;
     char *displayName;
