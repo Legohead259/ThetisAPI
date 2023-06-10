@@ -1,12 +1,12 @@
 #######################################
-# IDE Map for Reefwing xIMU3 GUI Library
+# IDE Map for xioAPI-Arduino Library
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-ReefwingxIMU3 KEYWORD1
+xioTechnologies KEYWORD1
 InertialMessage KEYWORD1
 ScaledData  KEYWORD1
 TempData    KEYWORD1
