@@ -18,7 +18,7 @@
 
 #include "xioAPI.h"
 
-xioAPI xioapi;
+xioAPI api;
 
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
@@ -204,7 +204,7 @@ void xioAPI::handleCommand(const char* cmdPtr) {
     // First check to see if it is a setting read/write command:
     const size_t numEntries = sizeof(settingTable) / sizeof(settingTable[0]);
     for (size_t i=0; i<numEntries; i++) { // Check all keys in the hash table
-        if (settingTable[i].key == cmdHash) { // If the command key is present in the hash table, then it is a setting read/write
+        if (settingTable[i].hash == cmdHash) { // If the command key is present in the hash table, then it is a setting read/write
             if (_value.isNull()) { // If the passed value was null, then it is a read command
                 sendSetting(cmdPtr, &settingTable[i]);
             }
@@ -224,11 +224,11 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             break;
         case APPLY:
             // TODO: ignore? Settings are automatically set when configurations loaded
-            sendApplyAck();
+            sendAck("apply");
             break;
         case SAVE:
             saveConfigurations();
-            sendSaveAck();
+            sendAck("save");
             break;
         case TIME:
             if (_value != nullptr) { // Assume that a WRITE command has been sent
@@ -240,10 +240,12 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             sendPing(Ping{"USB", settings.deviceName, settings.serialNumber}); // TODO: Update to support multiple interfaces
             break;
         case RESET:
-            // TODO: Return the message and reset the microcontroller
+            sendAck("reset");
+            cmdReset();
             break;
         case SHUTDOWN:
-            // TODO: Return the message and shutdown the microcontroller
+            sendAck("shutdown");
+            cmdShutdown();
             break;
         case STROBE:
             cmdStrobe();
@@ -252,33 +254,37 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             cmdColour();
             break;
         case HEADING:
-            if (settings.ahrsIgnoreMagnetometer) {
-                send(true, "{heading:%f}", getValue<float>());
-            }
-            else {
+            if (!settings.ahrsIgnoreMagnetometer) {
                 cmdHeading();
             }
+            send(true, "{heading:%f}", getValue<float>());
             break;
         case xioAPI_Protocol::ACCESSORY:
-            // TODO: Transmit data across the OTG serial bus and return the message
+            cmdSerialAccessory();
+            sendAck("serialAccessory");
             break;
         case NOTE:
             sendNotification(getValue<const char*>());
             break;
         case FORMAT:
-            // TODO: Format the data logging SD card and return the message
+            cmdFormat();
+            sendAck("format");
             break;
         case TEST:
-            // TODO: Run a self-test routine and send back the response
+            cmdSelfTest();
             break;
         case BOOTLOADER:
-            // TODO: Return the message and put the chip into BOOTLOADER mode
+            sendAck("bootloader");
+            cmdBootloader();
             break;
         case FACTORY:
-            // TODO: set the device into a factory mode
+            cmdFactory();
+            sendAck("factory");
             break;
         case ERASE:
-            // TODO: Erase the config file and return the message
+            cmdErase();
+            sendAck("erase");
+            break;
         default:
             char _buf[128];
             sprintf(_buf, "Did not recognize key: %s as %lu", cmdPtr, cmdHash);

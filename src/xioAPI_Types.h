@@ -63,8 +63,8 @@ typedef enum {
 
 typedef enum wireless_mode_t {
     WIRELESS_DISABLED = 0,
-    WIFI_CLIENT,
-    WIFI_AP,
+    WIRELESS_CLIENT,
+    WIRELESS_AP,
     BLUETOOTH
 } wireless_mode_t;
 

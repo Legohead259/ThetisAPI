@@ -61,7 +61,7 @@ enum APIKeyHashASCII {
     HARDWARE_VERSION                            = 0x445818D9,
     SERIAL_MODE                                 = 0xAD8C37EA,
     SERIAL_BAUD_RATE                            = 0x529AE1ED,
-    SERIAL_RTC_CTS_ENABLED                      = 0x1B98A393,
+    SERIAL_RTS_CTS_ENABLED                      = 0x1B98A393,
     SERIAL_ACCESSORY_NUMBER_OF_BYTES            = 0x2288AC96,
     SERIAL_ACCESSORY_TERMINATION_BYTE           = 0x724D8BCF,
     SERIAL_ACCESSORY_TIMEOUT                    = 0x526AD0D8,

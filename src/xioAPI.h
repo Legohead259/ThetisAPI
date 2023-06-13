@@ -54,8 +54,7 @@ public:
     // ------------------------
 
     void sendSetting(const char* key, const settingTableEntry* entry);
-    void sendApplyAck() { send(true, "{\"apply\":null}"); }
-    void sendSaveAck() { send(true, "{\"save\":null}"); }
+    void sendAck(const char* cmd) { send(true, "{\"%s\":null}", cmd); }
     void sendPing(Ping ping);
     void sendSelfTestResults(SelfTestResults results);
     void sendNetworkAnnouncement(NetworkAnnouncement na);
@@ -87,7 +86,7 @@ public:
     // Formats the device storage to FAT32 - ERASES ALL DATA. NOTE: `cmdFormatCallbackPtr` must be user-defined before called.
     void cmdFormat() { executeUserDefinedCommand(cmdFormatCallbackPtr); }
 
-    // Puts the device into a self-test diagnostic mode. NOTE: `cmdSelfTestCallbackPtr` must be user-defined before called.
+    // Puts the device into a self-test diagnostic mode and sends the results. NOTE: `cmdSelfTestCallbackPtr` must be user-defined before called.
     void cmdSelfTest() { executeUserDefinedCommand(cmdSelfTestCallbackPtr); }
 
     // Puts the device into the bootloader mode. NOTE: `cmdBootloaderCallbackPtr` must be user-defined before called.
@@ -194,9 +193,9 @@ private:
     CallbackFunction cmdFactoryCallbackPtr = nullptr;
     CallbackFunction cmdEraseCallbackPtr = nullptr;
 
-    void executeUserDefinedCommand(CallbackFunction cbPtr) {if (cbPtr != nullptr) cbPtr(); else return;}
+    void executeUserDefinedCommand(CallbackFunction cbPtr) { if (cbPtr != nullptr) cbPtr(); else return; }
 };
 
-extern xioAPI xioapi;
+extern xioAPI api;
 
 #endif // xioAPI_h

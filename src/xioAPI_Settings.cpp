@@ -28,6 +28,87 @@ File _file;
 StaticJsonDocument<6144> _jsonConfigDoc;
 device_settings_t settings;
 bool _factoryMode = false;
+settingTableEntry settingTable[256] = {
+    {"calibrationDate", CALIBRATION_DATE, &settings.calibrationDate, CHAR_ARRAY, 32},
+    {"gyroscopeMisalignment", GYROSCOPE_MISALIGNMENT, &settings.gyroscopeMisalignment, FLOAT_ARRAY, 9},
+    {"gyroscopeSensitivity", GYROSCOPE_SENSITIVITY, &settings.gyroscopeSensitivity, FLOAT_ARRAY, 3},
+    {"gyroscopeOffset", GYROSCOPE_OFFSET, &settings.gyroscopeOffset, FLOAT_ARRAY, 3},
+    {"AccelerometerMisalignment", ACCELEROMETER_MISALIGNMENT, &settings.accelerometerMisalignment, FLOAT_ARRAY, 9},
+    {"accelerometerSensitivity", ACCELEROMETER_SENSITIVITY, &settings.accelerometerSensitivity, FLOAT_ARRAY, 3},
+    {"accelerometerOffset", ACCELEROMETER_OFFSET, &settings.accelerometerOffset, FLOAT_ARRAY, 3},
+    {"softIronMatrix", SOFT_IRON_MATRIX, &settings.softIronMatrix, FLOAT_ARRAY, 9},
+    {"hardIronOffset", HARD_IRON_OFFSET, &settings.hardIronOffset, FLOAT_ARRAY, 3},
+    {"highGAccelerometerMisalignment", HIGHG_ACCELEROMETER_MISALIGNMENT, &settings.highGAccelerometerMisalignment, FLOAT_ARRAY, 9},
+    {"highGAccelerometerSensitivity", HIGHG_ACCELEROMETER_SENSITIVITY, &settings.highGAccelerometerSensitivity, FLOAT_ARRAY, 3},
+    {"highGAccelerometerOffset", HIGHG_ACCELEROMETER_OFFSET, &settings.highGAccelerometerOffset, FLOAT_ARRAY, 3},
+    {"deviceName", DEVICE_NAME, &settings.deviceName, CHAR_ARRAY, 32},
+    {"serialNumber", SERIAL_NUMBER, &settings.serialNumber, CHAR_ARRAY, 20},
+    {"firmwareVersion", FIRMWARE_VERSION, &settings.firmwareVersion, CHAR_ARRAY, 10},
+    {"bootloaderVersion", BOOTLOADER_VERSION, &settings.bootloaderVersion, CHAR_ARRAY, 10},
+    {"hardwareVersion", HARDWARE_VERSION, &settings.hardwareVersion, CHAR_ARRAY, 8},
+    {"serialMode", SERIAL_MODE, &settings.serialMode, INT},
+    {"serialBaudRate", SERIAL_BAUD_RATE, &settings.serialBaudRate, INT},
+    {"serialRtsCtsEnabled", SERIAL_RTS_CTS_ENABLED, &settings.serialRtsCtsEnabled, BOOL},
+    {"serialAccessoryNumberOfBytes", SERIAL_ACCESSORY_NUMBER_OF_BYTES, &settings.serialAccessoryNumberOfBytes, INT},
+    {"serialAccessoryTerminationByte", SERIAL_ACCESSORY_TERMINATION_BYTE, &settings.serialAccessoryTerminationByte, CHAR},
+    {"serialAccessoryTimeout", SERIAL_ACCESSORY_TIMEOUT, &settings.serialAccessoryTimeout, INT},
+    {"wirelessMode", WIRELESS_MODE, &settings.wirelessMode, INT},
+    {"wirelessFirmwareVersion", WIRELESS_FIRMWARE_VERSION, &settings.wirelessFirmwareVersion, CHAR_ARRAY, 10},
+    {"externalAntennaeEnabled", EXTERNAL_ANTENNAE_ENABLED, &settings.externalAntennaeEnabled, BOOL},
+    {"wiFiRegion", WIFI_REGION, &settings.wiFiRegion, INT},
+    {"wiFiMacAddress", WIFI_MAC_ADDRESS, &settings.wiFiMacAddress, CHAR_ARRAY, 18},
+    {"wiFiIPAddress", WIFI_IP_ADDRESS, &settings.wiFiIPAddress, CHAR_ARRAY, 16},
+    {"wiFiClientSsid", WIFI_CLIENT_SSID, &settings.wiFiClientSsid, CHAR_ARRAY, 64},
+    {"wiFiClientKey", WIFI_CLIENT_KEY, &settings.wiFiClientKey, CHAR_ARRAY, 64},
+    {"wiFiClientChannel", WIFI_CLIENT_CHANNEL, &settings.wiFiClientChannel, INT},
+    {"wiFiClientDhcpEnabled", WIFI_CLIENT_DHCP_ENABLED, &settings.wiFiClientDhcpEnabled, BOOL},
+    {"wiFiClientIPAddress", WIFI_CLIENT_IP_ADDRESS, &settings.wiFiClientIPAddress, CHAR_ARRAY, 16},
+    {"wiFiClientNetmask", WIFI_CLIENT_NETMASK, &settings.wiFiClientNetmask, CHAR_ARRAY, 16},
+    {"wiFiClientGateway", WIFI_CLIENT_GATEWAY, &settings.wiFiClientGateway, CHAR_ARRAY, 16},
+    {"wiFiAPSsid", WIFI_AP_SSID, &settings.wiFiAPSsid, CHAR_ARRAY, 64},
+    {"wiFiAPKey", WIFI_AP_KEY, &settings.wiFiAPKey, CHAR_ARRAY, 64},
+    {"wiFiAPChannel", WIFI_AP_CHANNEL, &settings.wiFiAPChannel, INT},
+    {"tcpPort", TCP_PORT, &settings.tcpPort, INT},
+    {"udpIPAddress", UDP_IP_ADDRESS, &settings.udpIPAddress, CHAR_ARRAY, 16},
+    {"udpSendPort", UDP_SEND_PORT, &settings.udpSendPort, INT},
+    {"udpReceivePort", UDP_RECEIVE_PORT, &settings.udpReceivePort, INT},
+    {"synchronisationEnabled", SYNCHRONISATION_ENABLED, &settings.synchronisationEnabled, BOOL},
+    {"synchronisationNetworkLatency", SYNCHRONISATION_NETWORK_LATENCY, &settings.synchronisationNetworkLatency, INT},
+    {"bluetoothAddress", BLUETOOTH_ADDRESS, &settings.bluetoothAddress, INT},
+    {"bluetoothName", BLUETOOTH_NAME, &settings.bluetoothName, CHAR_ARRAY, 32},
+    {"bluetoothPinCode", BLUETOOTH_PIN_CODE, &settings.bluetoothPinCode, CHAR_ARRAY, 5},
+    {"bluetoothDiscoveryMode", BLUETOOTH_DISCOVERY_MODE, &settings.bluetoothDiscoveryMode, INT},
+    {"bluetoothPairedAddress", BLUETOOTH_PAIRED_ADDRESS, &settings.bluetoothPairedAddress, INT},
+    {"bluetoothPairedLinkKey", BLUETOOTH_PAIRED_LINK_KEY, &settings.bluetoothPairedLinkKey, INT},
+    {"dataLoggerEnabled", DATA_LOGGER_ENABLED, &settings.dataLoggerEnabled, BOOL},
+    {"dataLoggerFileNamePrefix", DATA_LOGGER_FILE_NAME_PREFIX, &settings.dataLoggerFileNamePrefix, CHAR_ARRAY, 16},
+    {"dataLoggerFileNameTimeEnabled", DATA_LOGGER_FILE_NAME_TIME_ENABLED, &settings.dataLoggerFileNameTimeEnabled, BOOL},
+    {"dataLoggerFileNameCounterEnabled", DATA_LOGGER_FILE_NAME_COUNTER_ENABLED, &settings.dataLoggerFileNameCounterEnabled, BOOL},
+    {"dataLoggerMaxFileSize", DATA_LOGGER_MAX_FILE_SIZE, &settings.dataLoggerMaxFileSize, INT},
+    {"dataLoggerMaxFilePeriod", DATA_LOGGER_MAX_FILE_PERIOD, &settings.dataLoggerMaxFilePeriod, INT},
+    {"axesAlignment", AXES_ALIGNMENT, &settings.axesAlignment, INT},
+    {"gyroscopeOffsetCorrectionEnabled", GYROSCOPE_OFFSET_CORRECTION_ENABLED, &settings.gyroscopeOffsetCorrectionEnabled, BOOL},
+    {"ahrsAxesConvention", AHRS_AXES_CONVENTION, &settings.ahrsAxesConvention, INT},
+    {"ahrsGain", AHRS_GAIN, &settings.ahrsGain, FLOAT},
+    {"ahrsIgnoreMagnetometer", AHRS_IGNORE_MAGNETOMETER, &settings.ahrsIgnoreMagnetometer, BOOL},
+    {"ahrsAccelerationRejectionEnabled", AHRS_ACCELERATION_REJECTION_ENABLED, &settings.ahrsAccelerationRejectionEnabled, BOOL},
+    {"ahrsMagneticRejectionEnabled", AHRS_MAGNETIC_REJECTION_ENABLED, &settings.ahrsMagneticRejectionEnabled, BOOL},
+    {"binaryModeEnabled", BINARY_MODE_ENABLED, &settings.binaryModeEnabled, BOOL},
+    {"usbDataMessagesEnabled", USB_DATA_MESSAGES_ENABLED, &settings.usbDataMessagesEnabled, BOOL},
+    {"serialDataMessagesEnabled", SERIAL_DATA_MESSAGES_ENABLED, &settings.serialDataMessagesEnabled, BOOL},
+    {"tcpDataMessagesEnabled", TCP_DATA_MESSAGES_ENABLED, &settings.tcpDataMessagesEnabled, BOOL},
+    {"udpDataMessagesEnabled", UDP_DATA_MESSAGES_ENABLED, &settings.udpDataMessagesEnabled, BOOL},
+    {"bluetoothDataMessagesEnabled", BLUETOOTH_DATA_MESSAGES_ENABLED, &settings.bluetoothDataMessagesEnabled, BOOL},
+    {"dataLoggerDataMessagesEnabled", DATA_LOGGER_DATA_MESSAGES_ENABLED, &settings.dataLoggerDataMessagesEnabled, BOOL},
+    {"ahrsMessageType", AHRS_MESSAGE_TYPE, &settings.ahrsMessageType, INT},
+    {"inertialMessageRateDivisor", INERTIAL_MESSAGE_RATE_DIVISOR, &settings.inertialMessageRateDivisor, INT},
+    {"magnetometerMessageRateDivisor", MAGNETOMETER_MESSAGE_RATE_DIVISOR, &settings.magnetometerMessageRateDivisor, INT},
+    {"ahrsMessageRateDivisor", AHRS_MESSAGE_RATE_DIVISOR, &settings.ahrsMessageRateDivisor, INT},
+    {"highGAccelerometerMessageRateDivisor", HIGHG_ACCELEROMETER_MESSAGE_RATE_DIVISOR, &settings.highGAccelerometerMessageRateDivisor, INT},
+    {"temperatureMessageRateDivisor", TEMPERATURE_MESSAGE_RATE_DIVISOR, &settings.temperatureMessageRateDivisor, INT},
+    {"batteryMessageRateDivisor", BATTERY_MESSAGE_RATE_DIVISOR, &settings.batteryMessageRateDivisor, INT},
+    {"rssiMessageRateDivisor", RSSI_MESSAGE_RATE_DIVISOR, &settings.rssiMessageRateDivisor, INT},
+};
 
 bool loadConfigurationsFromJSON(bool checkFile, const char* filename) {
     if (checkFile) {
@@ -56,31 +137,31 @@ bool loadConfigurationsFromJSON(bool checkFile, const char* filename) {
     for (size_t i=0; i<3; i++) { settings.gyroscopeSensitivity[i] = gyroscopeSensitivity[i]; }
 
     JsonArray gyroscopeOffset = _jsonConfigDoc["gyroscopeOffset"];
-    for (size_t i=0; i<9; i++) { settings.gyroscopeOffset[i] = gyroscopeOffset[i]; }
+    for (size_t i=0; i<3; i++) { settings.gyroscopeOffset[i] = gyroscopeOffset[i]; }
 
     JsonArray accelerometerMisalignment = _jsonConfigDoc["accelerometerMisalignment"];
     for (size_t i=0; i<9; i++) { settings.accelerometerMisalignment[i] = accelerometerMisalignment[i]; }
 
     JsonArray accelerometerSensitivity = _jsonConfigDoc["accelerometerSensitivity"];
-    for (size_t i=0; i<9; i++) { settings.accelerometerSensitivity[i] = accelerometerSensitivity[i]; }
+    for (size_t i=0; i<3; i++) { settings.accelerometerSensitivity[i] = accelerometerSensitivity[i]; }
 
     JsonArray accelerometerOffset = _jsonConfigDoc["accelerometerOffset"];
-    for (size_t i=0; i<9; i++) { settings.accelerometerOffset[i] = accelerometerOffset[i]; }
+    for (size_t i=0; i<3; i++) { settings.accelerometerOffset[i] = accelerometerOffset[i]; }
 
     JsonArray softIronMatrix = _jsonConfigDoc["softIronMatrix"];
     for (size_t i=0; i<9; i++) { settings.softIronMatrix[i] = softIronMatrix[i]; }
 
     JsonArray hardIronOffset = _jsonConfigDoc["hardIronOffset"];
-    for (size_t i=0; i<9; i++) { settings.hardIronOffset[i] = hardIronOffset[i]; }
+    for (size_t i=0; i<3; i++) { settings.hardIronOffset[i] = hardIronOffset[i]; }
 
     JsonArray highGAccelerometerMisalignment = _jsonConfigDoc["highGAccelerometerMisalignment"];
     for (size_t i=0; i<9; i++) { settings.highGAccelerometerMisalignment[i] = highGAccelerometerMisalignment[i]; }
 
     JsonArray highGAccelerometerSensitivity = _jsonConfigDoc["highGAccelerometerSensitivity"];
-    for (size_t i=0; i<9; i++) { settings.highGAccelerometerSensitivity[i] = highGAccelerometerSensitivity[i]; }
+    for (size_t i=0; i<3; i++) { settings.highGAccelerometerSensitivity[i] = highGAccelerometerSensitivity[i]; }
 
     JsonArray highGAccelerometerOffset = _jsonConfigDoc["highGAccelerometerOffset"];
-    for (size_t i=0; i<9; i++) { settings.highGAccelerometerOffset[i] = highGAccelerometerOffset[i]; }
+    for (size_t i=0; i<3; i++) { settings.highGAccelerometerOffset[i] = highGAccelerometerOffset[i]; }
 
     strcpy(settings.deviceName,               _jsonConfigDoc["deviceName"]); // "x-IMU3"
     strcpy(settings.serialNumber,             _jsonConfigDoc["serialNumber"]); // "Unknown"
@@ -153,7 +234,6 @@ bool loadConfigurationsFromJSON(bool checkFile, const char* filename) {
 
     // Clear the JSON buffer
     // _jsonConfigDoc.clear();
-
     return true;
 }
 
@@ -320,7 +400,6 @@ void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
             }
             break;
         case CHAR_ARRAY:
-            Serial.println("Updating CHAR ARRAY");
             charPtr = static_cast<char*>(entry->value); // Cast the value pointer to char*
             strncpy(charPtr, newValue, entry->len - 1); // Copy the new value to the setting value
             charPtr[entry->len - 1] = '\0'; // Null-terminate the string
@@ -329,5 +408,6 @@ void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
             return;
     }
 }
+
 
 
