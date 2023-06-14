@@ -46,12 +46,13 @@ bool xioAPI::begin(Stream* port) {
  * @param key The setting name (consult the xioAPI documentation for valid names)
  * @param entry The corresponding entry from the settings lookup table
 */
-void xioAPI::sendSetting(const char* key, const settingTableEntry* entry) {
+void xioAPI::sendSetting(const settingTableEntry* entry) {
     // Setting format: {"[setting]":[value]}\r\n
 
     StaticJsonDocument<256> _doc;
     char _out[256];
 
+    const char* key = entry->key;
     SettingType _entryType = entry->type;
     void* _entryValue = entry->value;
     JsonArray _settingArray;
@@ -156,6 +157,17 @@ void xioAPI::sendNetworkAnnouncement(NetworkAnnouncement na) {
     send(true, "%s", _out);
 }
 
+void xioAPI::sendSettingTable() {
+    for (size_t i=0; i<SETTING_TABLE_SIZE; i++) {
+        if (settingTable[i].key == nullptr) continue; // Skip sending the setting if the key (entry) is empty
+        sendSetting(&settingTable[i]);
+    }
+}
+
+void xioAPI::sendSettingFile() {
+    serializeJsonPretty(_jsonConfigDoc, Serial);
+}
+
 
 // =================================
 // === COMMAND HANDLER FUNCTIONS ===
@@ -206,11 +218,11 @@ void xioAPI::handleCommand(const char* cmdPtr) {
     for (size_t i=0; i<numEntries; i++) { // Check all keys in the hash table
         if (settingTable[i].hash == cmdHash) { // If the command key is present in the hash table, then it is a setting read/write
             if (_value.isNull()) { // If the passed value was null, then it is a read command
-                sendSetting(cmdPtr, &settingTable[i]);
+                sendSetting(&settingTable[i]);
             }
             else {
                 updateSetting(&settingTable[i], _value);
-                sendSetting(cmdPtr, &settingTable[i]);
+                sendSetting(&settingTable[i]);
             }
             
             // Exit function after handle
@@ -285,6 +297,12 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             cmdErase();
             sendAck("erase");
             break;
+        case READ_ALL:
+            sendSettingTable();
+            break;
+        case READ_JSON:
+            sendSettingFile();
+            break;
         default:
             char _buf[128];
             sprintf(_buf, "Did not recognize key: %s as %lu", cmdPtr, cmdHash);
@@ -347,25 +365,6 @@ void xioAPI::clearCmd() {
 */
 void xioAPI::clearValue() {
     _value.clear();
-}
-
-/**
- * @brief Converts a string to an unsigned long via the DJB2 hash function
- * @note The hashing function changes depending on architecture.
- * Ensure that similar architectures are used to generate the keys being checked against.
- * 
- * @param str The string to be converted
- * 
- * @return The numerical representation of the given string as an unsigned long
-*/
-unsigned long xioAPI::hash(const char *str) {
-    //  djb2 Hash Function
-    unsigned long hash = 5381;  
-    int c;
-
-    while ((c = *str++))
-        hash = ((hash << 5) + hash) + c;
-    return hash;
 }
 
 /**

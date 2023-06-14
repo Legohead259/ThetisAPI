@@ -30,11 +30,13 @@
 #include <FS.h>
 #include "xioAPI_Types.h"
 #include "xioAPI_Protocol.h"
+#include "xioAPI_Utility.h"
 
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
 
-#define NUM_SETTINGS 79
+#define SETTING_TABLE_SIZE 256
+#define NUM_BASE_SETTINGS 79
 
 
 // ===================================
@@ -172,8 +174,7 @@ struct settingTableEntry {
     size_t len;
 };
 
-extern settingTableEntry settingTable[256];
-static int settingTableSize = sizeof(settingTable) / sizeof(settingTable[0]);
+extern settingTableEntry settingTable[SETTING_TABLE_SIZE];
 
 bool loadConfigurationsFromJSON(bool checkFile=false, const char* filename=CONFIG_FILE_NAME);
 bool saveConfigurations();

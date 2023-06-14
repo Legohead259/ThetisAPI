@@ -28,6 +28,7 @@
 #include "xioAPI_Types.h"
 #include "xioAPI_Settings.h"
 #include "xioAPI_Protocol.h"
+#include "xioAPI_Utility.h"
 #include "TimeLib.h" 
 
 using namespace xioAPI_Types;
@@ -40,7 +41,6 @@ public:
     bool begin(Stream* port);
     void checkForCommand();
     void handleCommand(const char* cmdPtr);
-    unsigned long hash(const char *str);
 
     const char* getCommand() { return _cmd; }
     
@@ -53,11 +53,13 @@ public:
     // --- COMMAND MESSAGES ---
     // ------------------------
 
-    void sendSetting(const char* key, const settingTableEntry* entry);
+    void sendSetting(const settingTableEntry* entry);
     void sendAck(const char* cmd) { send(true, "{\"%s\":null}", cmd); }
     void sendPing(Ping ping);
     void sendSelfTestResults(SelfTestResults results);
     void sendNetworkAnnouncement(NetworkAnnouncement na);
+    void sendSettingTable();
+    void sendSettingFile();
 
     // Update the internal system time with passed _value. NOTE: `cmdWriteTimeCallbackPtr` must be user-defined before called.
     void cmdWriteTime() { executeUserDefinedCommand(cmdWriteTimeCallbackPtr); }
