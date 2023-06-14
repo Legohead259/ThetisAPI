@@ -142,7 +142,9 @@ enum APIKeyHashASCII {
     TEST        = 0x7C9E6865,
     BOOTLOADER  = 0x9999EDD0,
     FACTORY     = 0x98F9347D,
-    ERASE       = 0x0F62DA15
+    ERASE       = 0x0F62DA15,
+    READ_ALL    = 0x3DDAF47A,
+    READ_JSON   = 0xF93E91BB
 };
 
 /******************************************************************
