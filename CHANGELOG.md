@@ -15,12 +15,15 @@ Release sections
 ### Removed
 ### Security 
 -->
-## Version 1.0.0 - 2023-06-10
+
+## Version 1.0.0 - 2023-06-16
 ### Known Bugs
 - Null Pointer error on some commands
 - Configuration storage only compatible with JSON in SPIFFS [#2]([url](https://github.com/Legohead259/xioAPI-Arduino/issues/2))
-- ESP32-S2 does not connect to x-IMU3 GUI natively, despite the functions working as intended
+- ESP32-S2 does not connect to x-IMU3 GUI natively, despite the functions working as intended [#3]([url](https://github.com/Legohead259/xioAPI-Arduino/issues/3))
 
 ### Added
 - Basic implementation of all xioAPI commands
 - Configuration settings and handling
+- Added a `readAll` command the sends all settings from the settings lookup table
+- Added a `readJson` command the sends the JSON configuration setting file
