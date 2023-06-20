@@ -178,7 +178,94 @@ extern settingTableEntry settingTable[SETTING_TABLE_SIZE];
 
 bool loadConfigurationsFromJSON(bool checkFile=false, const char* filename=CONFIG_FILE_NAME);
 bool saveConfigurations();
+
+settingTableEntry* getSetting(const char* key);
+settingTableEntry* getSetting(unsigned long hash);
 void updateSetting(const settingTableEntry* entry, JsonVariant newValue);
+
+template<typename T>
+inline void updateSetting(const char* key, T newValue) {
+    unsigned long _hash = hash(key);
+    updateSetting<T>(hash, newValue);
+}
+
+template<typename T>
+inline void updateSetting(unsigned long hash, T newValue);
+
+template<>
+inline void updateSetting<bool>(unsigned long hash, bool newValue) {
+    settingTableEntry* _entryPtr = getSetting(hash);
+    if (_entryPtr == nullptr) return;
+    
+    bool* boolPtr;
+    if (_entryPtr->type == BOOL) {
+        boolPtr = static_cast<bool*>(_entryPtr->value); // Cast the value pointer to bool*
+        *boolPtr = newValue; // Assign the new value to the setting valueQ
+    }
+}
+
+template<>
+inline void updateSetting<uint8_t>(unsigned long hash, uint8_t newValue) {
+    settingTableEntry* _entryPtr = getSetting(hash);
+    if (_entryPtr == nullptr) return;
+
+    uint8_t* uint8Ptr;
+    if (_entryPtr->type == CHAR) {
+        uint8Ptr = static_cast<uint8_t*>(_entryPtr->value); // Cast the value pointer to bool*
+        *uint8Ptr = newValue; // Assign the new value to the setting valueQ
+    }
+}
+
+template<>
+inline void updateSetting<float>(unsigned long hash, float newValue) {
+    settingTableEntry* _entryPtr = getSetting(hash);
+    if (_entryPtr == nullptr) return;
+    
+    float* floatPtr;
+    if (_entryPtr->type == FLOAT) {
+        floatPtr = static_cast<float*>(_entryPtr->value); // Cast the value pointer to bool*
+        *floatPtr = newValue; // Assign the new value to the setting valueQ
+    }
+}
+
+template<>
+inline void updateSetting<int>(unsigned long hash, int newValue) {
+    settingTableEntry* _entryPtr = getSetting(hash);
+    if (_entryPtr == nullptr) return;
+    
+    int* intPtr;
+    if (_entryPtr->type == INT) {
+        intPtr = static_cast<int*>(_entryPtr->value); // Cast the value pointer to bool*
+        *intPtr = newValue; // Assign the new value to the setting valueQ
+    }
+}
+
+template<>
+inline void updateSetting<float[]>(unsigned long hash, float newValue[]) {
+    settingTableEntry* _entryPtr = getSetting(hash);
+    if (_entryPtr == nullptr) return;
+    
+    float* floatPtr;
+    if (_entryPtr->type == INT) {
+        floatPtr = static_cast<float*>(_entryPtr->value); // Cast the value pointer to float*
+        for (size_t i=0; i<_entryPtr->len; i++) { // Copy the new array values to the setting value
+            floatPtr[i] = newValue[i];
+        }
+    }
+}
+
+template<>
+inline void updateSetting<const char*>(unsigned long hash, const char* newValue) {
+    settingTableEntry* _entryPtr = getSetting(hash);
+    if (_entryPtr == nullptr) return;
+
+    char* charPtr;
+    if (_entryPtr->type == CHAR_ARRAY) {
+        charPtr = static_cast<char*>(_entryPtr->value); // Cast the value pointer to char*
+        strncpy(charPtr, newValue, _entryPtr->len - 1); // Copy the new value to the setting value
+        charPtr[_entryPtr->len - 1] = '\0'; // Null-terminate the string
+    }
+}
 
 template <typename T>
 inline T getSetting(const char* key) {

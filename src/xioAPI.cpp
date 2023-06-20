@@ -246,7 +246,7 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             if (_value != nullptr) { // Assume that a WRITE command has been sent
                 cmdWriteTime();
             }
-            sendTime();
+            cmdReadTime();
             break;
         case PING:
             sendPing(Ping{"USB", settings.deviceName, settings.serialNumber}); // TODO: Update to support multiple interfaces

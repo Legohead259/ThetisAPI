@@ -53,6 +53,7 @@ public:
     // --- COMMAND MESSAGES ---
     // ------------------------
 
+    void send(bool writeLineFeed, const char* message, ...);
     void sendSetting(const settingTableEntry* entry);
     void sendAck(const char* cmd) { send(true, "{\"%s\":null}", cmd); }
     void sendPing(Ping ping);
@@ -65,7 +66,7 @@ public:
     void cmdWriteTime() { executeUserDefinedCommand(cmdWriteTimeCallbackPtr); }
     
     // Send the internal system time. NOTE: `cmdReadTimeCallbackPtr` must be user-defined before called.
-    void sendTime() { executeUserDefinedCommand(cmdReadTimeCallbackPtr); }
+    void cmdReadTime() { executeUserDefinedCommand(cmdReadTimeCallbackPtr); }
     
     // Soft resets the device. NOTE: `cmdResetCallbackPtr` must be user-defined before called.
     void cmdReset() { executeUserDefinedCommand(cmdResetCallbackPtr); }
@@ -176,7 +177,6 @@ protected:
 
     ValueType parseValueType(char c);
     void print(const char *line);
-    void send(bool writeLineFeed, const char* message, ...);
 
 private:
     void clearCmd();

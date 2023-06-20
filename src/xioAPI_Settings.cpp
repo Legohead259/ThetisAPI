@@ -206,6 +206,19 @@ bool saveConfigurations() {
     return true;
 }
 
+settingTableEntry* getSetting(const char* key) {
+    unsigned long _hash = hash(key);
+    return getSetting(_hash);
+}
+
+settingTableEntry* getSetting(unsigned long hash) {
+    for (size_t i=0; i<SETTING_TABLE_SIZE; i++) {
+        if (settingTable[i].key == nullptr) continue; // Check if the setting table entry is empty
+        if (settingTable[i].hash == hash) return &settingTable[i];
+    }
+    return nullptr;
+}
+
 void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
     bool* boolPtr;
     uint8_t* uint8Ptr;
@@ -245,6 +258,4 @@ void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
             return;
     }
 }
-
-
 

@@ -16,6 +16,15 @@ Release sections
 ### Security 
 -->
 
+## [UNRELEASED] Version 1.1.0 - 2023-06
+### Added
+- Added new `updateSetting()` functions that can access the setting lookup table directly
+
+### Changed
+- Minor refactor of `sendTime()` to `cmdReadTime()` for clarity and consistency
+  
+---
+
 ## Version 1.0.0 - 2023-06-16
 ### Known Bugs
 - Null Pointer error on some commands
