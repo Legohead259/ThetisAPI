@@ -42,4 +42,41 @@ inline unsigned long hash(const char *str) {
     return hash;
 }
 
+/**
+ * @brief Converts a hexadecimal string to an unsigned long representation of itself.
+ * 
+ * @param str the string to be converted
+ * 
+ * @return The numerical representation of the given string as an unsigned long
+*/
+inline unsigned long hexStringToUnsignedLong(const char* str) {
+    unsigned long result = 0;
+    int length = strlen(str);
+    
+    for (int i = 0; i < length; i++) {
+        char c = str[i];
+        unsigned long digitValue = 0;
+
+        if (isdigit(c)) {
+            digitValue = c - '0';
+        } 
+        else if (isxdigit(c)) {
+            if (isupper(c)) {
+                digitValue = c - 'A' + 10;
+            } 
+            else {
+                digitValue = c - 'a' + 10;
+            }
+        } 
+        else {
+            // Invalid character in the string
+            // Handle the error or return an appropriate value
+        }
+
+        result = (result << 4) | digitValue;
+    }
+
+    return result;
+}
+
 #endif // XIOAPI_UTILITY_H
