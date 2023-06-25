@@ -305,7 +305,7 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             break;
         default:
             char _buf[128];
-            sprintf(_buf, "Did not recognize key: %s as %lu", cmdPtr, cmdHash);
+            sprintf(_buf, "Did not recognize key: %s as %08x", cmdPtr, cmdHash);
             sendError(_buf);
     }
 }
