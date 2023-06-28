@@ -34,7 +34,7 @@
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
 
-typedef void (*CallbackFunction)();
+typedef std::function<void()> CallbackFunction;
 
 class xioAPI {
 public:
