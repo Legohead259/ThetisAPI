@@ -72,7 +72,7 @@ void xioAPI::sendSetting(const settingTableEntry* entry) {
             _doc[key] = *(int*) _entryValue;
             break;
         case FLOAT_ARRAY:
-            _settingArray = _doc.createNestedArray(_cmd);
+            _settingArray = _doc.createNestedArray(key);
             _array = static_cast<const float*>(_entryValue);
             for (size_t i=0; i<entry->len; i++) {
                 _settingArray.add(_array[i]);
