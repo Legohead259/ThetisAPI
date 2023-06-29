@@ -44,7 +44,7 @@ enum APIKeyHashASCII {
 
     CALIBRATION_DATE                            = 0x69AE1A4B,
     GYROSCOPE_MISALIGNMENT                      = 0xC6E2FB88,
-    GYROSCOPE_SENSITIVITY                       = 0xB36B4E03,
+    GYROSCOPE_SENSITIVITY                       = 0x1B3D340B,
     GYROSCOPE_OFFSET                            = 0x54042907,
     ACCELEROMETER_MISALIGNMENT                  = 0x05F233A8,
     ACCELEROMETER_SENSITIVITY                   = 0x5B35E82B,
