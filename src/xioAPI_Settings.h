@@ -179,14 +179,23 @@ extern settingTableEntry settingTable[SETTING_TABLE_SIZE];
 bool loadConfigurationsFromJSON(bool checkFile=false, const char* filename=CONFIG_FILE_NAME);
 bool saveConfigurations();
 
-settingTableEntry* getSetting(const char* key);
-settingTableEntry* getSetting(unsigned long hash);
+settingTableEntry* getSettingEntry(const char* key);
+settingTableEntry* getSettingEntry(unsigned long hash);
+
+template <typename T>
+inline T getSetting(const char* key) {
+    if (_jsonConfigDoc.containsKey(key)) {
+        return _jsonConfigDoc[key].as<T>();
+    }
+    return T();
+}
+
 void updateSetting(const settingTableEntry* entry, JsonVariant newValue);
 
 template<typename T>
 inline void updateSetting(const char* key, T newValue) {
     unsigned long _hash = hash(key);
-    updateSetting<T>(hash, newValue);
+    updateSetting<T>(_hash, newValue);
 }
 
 template<typename T>
@@ -194,7 +203,7 @@ inline void updateSetting(unsigned long hash, T newValue);
 
 template<>
 inline void updateSetting<bool>(unsigned long hash, bool newValue) {
-    settingTableEntry* _entryPtr = getSetting(hash);
+    settingTableEntry* _entryPtr = getSettingEntry(hash);
     if (_entryPtr == nullptr) return;
     
     bool* boolPtr;
@@ -206,7 +215,7 @@ inline void updateSetting<bool>(unsigned long hash, bool newValue) {
 
 template<>
 inline void updateSetting<uint8_t>(unsigned long hash, uint8_t newValue) {
-    settingTableEntry* _entryPtr = getSetting(hash);
+    settingTableEntry* _entryPtr = getSettingEntry(hash);
     if (_entryPtr == nullptr) return;
 
     uint8_t* uint8Ptr;
@@ -218,7 +227,7 @@ inline void updateSetting<uint8_t>(unsigned long hash, uint8_t newValue) {
 
 template<>
 inline void updateSetting<float>(unsigned long hash, float newValue) {
-    settingTableEntry* _entryPtr = getSetting(hash);
+    settingTableEntry* _entryPtr = getSettingEntry(hash);
     if (_entryPtr == nullptr) return;
     
     float* floatPtr;
@@ -230,7 +239,7 @@ inline void updateSetting<float>(unsigned long hash, float newValue) {
 
 template<>
 inline void updateSetting<int>(unsigned long hash, int newValue) {
-    settingTableEntry* _entryPtr = getSetting(hash);
+    settingTableEntry* _entryPtr = getSettingEntry(hash);
     if (_entryPtr == nullptr) return;
     
     int* intPtr;
@@ -242,7 +251,7 @@ inline void updateSetting<int>(unsigned long hash, int newValue) {
 
 template<>
 inline void updateSetting<float[]>(unsigned long hash, float newValue[]) {
-    settingTableEntry* _entryPtr = getSetting(hash);
+    settingTableEntry* _entryPtr = getSettingEntry(hash);
     if (_entryPtr == nullptr) return;
     
     float* floatPtr;
@@ -256,7 +265,7 @@ inline void updateSetting<float[]>(unsigned long hash, float newValue[]) {
 
 template<>
 inline void updateSetting<const char*>(unsigned long hash, const char* newValue) {
-    settingTableEntry* _entryPtr = getSetting(hash);
+    settingTableEntry* _entryPtr = getSettingEntry(hash);
     if (_entryPtr == nullptr) return;
 
     char* charPtr;
@@ -265,14 +274,6 @@ inline void updateSetting<const char*>(unsigned long hash, const char* newValue)
         strncpy(charPtr, newValue, _entryPtr->len - 1); // Copy the new value to the setting value
         charPtr[_entryPtr->len - 1] = '\0'; // Null-terminate the string
     }
-}
-
-template <typename T>
-inline T getSetting(const char* key) {
-    if (_jsonConfigDoc.containsKey(key)) {
-        return _jsonConfigDoc[key].as<T>();
-    }
-    return T();
 }
 
 #endif // XIOAPI_SETTINGS_H

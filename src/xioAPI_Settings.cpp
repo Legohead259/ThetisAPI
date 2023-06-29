@@ -33,7 +33,7 @@ settingTableEntry settingTable[SETTING_TABLE_SIZE] = {
     {"gyroscopeMisalignment", GYROSCOPE_MISALIGNMENT, &settings.gyroscopeMisalignment, FLOAT_ARRAY, 9},
     {"gyroscopeSensitivity", GYROSCOPE_SENSITIVITY, &settings.gyroscopeSensitivity, FLOAT_ARRAY, 3},
     {"gyroscopeOffset", GYROSCOPE_OFFSET, &settings.gyroscopeOffset, FLOAT_ARRAY, 3},
-    {"AccelerometerMisalignment", ACCELEROMETER_MISALIGNMENT, &settings.accelerometerMisalignment, FLOAT_ARRAY, 9},
+    {"accelerometerMisalignment", ACCELEROMETER_MISALIGNMENT, &settings.accelerometerMisalignment, FLOAT_ARRAY, 9},
     {"accelerometerSensitivity", ACCELEROMETER_SENSITIVITY, &settings.accelerometerSensitivity, FLOAT_ARRAY, 3},
     {"accelerometerOffset", ACCELEROMETER_OFFSET, &settings.accelerometerOffset, FLOAT_ARRAY, 3},
     {"softIronMatrix", SOFT_IRON_MATRIX, &settings.softIronMatrix, FLOAT_ARRAY, 9},
@@ -206,12 +206,12 @@ bool saveConfigurations() {
     return true;
 }
 
-settingTableEntry* getSetting(const char* key) {
+settingTableEntry* getSettingEntry(const char* key) {
     unsigned long _hash = hash(key);
-    return getSetting(_hash);
+    return getSettingEntry(_hash);
 }
 
-settingTableEntry* getSetting(unsigned long hash) {
+settingTableEntry* getSettingEntry(unsigned long hash) {
     for (size_t i=0; i<SETTING_TABLE_SIZE; i++) {
         if (settingTable[i].key == nullptr) continue; // Check if the setting table entry is empty
         if (settingTable[i].hash == hash) return &settingTable[i];
