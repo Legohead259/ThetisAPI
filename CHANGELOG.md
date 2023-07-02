@@ -17,11 +17,18 @@ Release sections
 -->
 
 ## [UNRELEASED] Version 1.1.0 - 2023-06
+### Known Bugs
+- xioAPI UDP functionality not working as intended. [#6](https://github.com/Legohead259/xioAPI-Arduino/issues/6)
+  
 ### Added
 - Added new `updateSetting()` functions that can access the setting lookup table directly
+- Added new `xioMatrix` and `xioVector` types
+- Added support for UDP WiFi messaging
+- Added dependency for `WiFiUDP`
 
 ### Changed
 - Minor refactor of `sendTime()` to `cmdReadTime()` for clarity and consistency
+- Changed type of `displayName`, `ipAddress`, and `serialNumber` to character array from character pointer
   
 ---
 
