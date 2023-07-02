@@ -30,17 +30,17 @@ device_settings_t settings;
 bool _factoryMode = false;
 settingTableEntry settingTable[SETTING_TABLE_SIZE] = {
     {"calibrationDate", CALIBRATION_DATE, &settings.calibrationDate, CHAR_ARRAY, 32},
-    {"gyroscopeMisalignment", GYROSCOPE_MISALIGNMENT, &settings.gyroscopeMisalignment, FLOAT_ARRAY, 9},
-    {"gyroscopeSensitivity", GYROSCOPE_SENSITIVITY, &settings.gyroscopeSensitivity, FLOAT_ARRAY, 3},
-    {"gyroscopeOffset", GYROSCOPE_OFFSET, &settings.gyroscopeOffset, FLOAT_ARRAY, 3},
-    {"accelerometerMisalignment", ACCELEROMETER_MISALIGNMENT, &settings.accelerometerMisalignment, FLOAT_ARRAY, 9},
-    {"accelerometerSensitivity", ACCELEROMETER_SENSITIVITY, &settings.accelerometerSensitivity, FLOAT_ARRAY, 3},
-    {"accelerometerOffset", ACCELEROMETER_OFFSET, &settings.accelerometerOffset, FLOAT_ARRAY, 3},
-    {"softIronMatrix", SOFT_IRON_MATRIX, &settings.softIronMatrix, FLOAT_ARRAY, 9},
-    {"hardIronOffset", HARD_IRON_OFFSET, &settings.hardIronOffset, FLOAT_ARRAY, 3},
-    {"highGAccelerometerMisalignment", HIGHG_ACCELEROMETER_MISALIGNMENT, &settings.highGAccelerometerMisalignment, FLOAT_ARRAY, 9},
-    {"highGAccelerometerSensitivity", HIGHG_ACCELEROMETER_SENSITIVITY, &settings.highGAccelerometerSensitivity, FLOAT_ARRAY, 3},
-    {"highGAccelerometerOffset", HIGHG_ACCELEROMETER_OFFSET, &settings.highGAccelerometerOffset, FLOAT_ARRAY, 3},
+    {"gyroscopeMisalignment", GYROSCOPE_MISALIGNMENT, &settings.gyroscopeMisalignment, MATRIX},
+    {"gyroscopeSensitivity", GYROSCOPE_SENSITIVITY, &settings.gyroscopeSensitivity, VECTOR},
+    {"gyroscopeOffset", GYROSCOPE_OFFSET, &settings.gyroscopeOffset, VECTOR},
+    {"accelerometerMisalignment", ACCELEROMETER_MISALIGNMENT, &settings.accelerometerMisalignment, MATRIX},
+    {"accelerometerSensitivity", ACCELEROMETER_SENSITIVITY, &settings.accelerometerSensitivity, VECTOR},
+    {"accelerometerOffset", ACCELEROMETER_OFFSET, &settings.accelerometerOffset, VECTOR},
+    {"softIronMatrix", SOFT_IRON_MATRIX, &settings.softIronMatrix, MATRIX},
+    {"hardIronOffset", HARD_IRON_OFFSET, &settings.hardIronOffset, VECTOR},
+    {"highGAccelerometerMisalignment", HIGHG_ACCELEROMETER_MISALIGNMENT, &settings.highGAccelerometerMisalignment, MATRIX},
+    {"highGAccelerometerSensitivity", HIGHG_ACCELEROMETER_SENSITIVITY, &settings.highGAccelerometerSensitivity, VECTOR},
+    {"highGAccelerometerOffset", HIGHG_ACCELEROMETER_OFFSET, &settings.highGAccelerometerOffset, VECTOR},
     {"deviceName", DEVICE_NAME, &settings.deviceName, CHAR_ARRAY, 32},
     {"serialNumber", SERIAL_NUMBER, &settings.serialNumber, CHAR_ARRAY, 20},
     {"firmwareVersion", FIRMWARE_VERSION, &settings.firmwareVersion, CHAR_ARRAY, 10},
@@ -160,7 +160,8 @@ bool saveConfigurations() {
         if (key == nullptr) continue; // Skip past the rest of the loop if the key (entry) is empty
 
         // Determine the value type and add it to the JSON object
-        float* array;
+        xioMatrix* _matrix;
+        xioVector* _vector;
         JsonArray jsonArray;
         
         switch (entry.type) {
@@ -176,12 +177,18 @@ bool saveConfigurations() {
             case CHAR:
                 root[key] = *(uint8_t*)entry.value;
                 break;
-            case FLOAT_ARRAY:
-                array = (float*)entry.value;
+            case VECTOR:
                 jsonArray = root.createNestedArray(key);
-                
-                for (size_t j=0; j<entry.len; j++) {
-                    jsonArray.add(array[j]);
+                _vector = static_cast<xioVector*>(entry.value);
+                for (size_t i=0; i<3; i++) {
+                    jsonArray.add(_vector->array[i]);
+                }
+                break;
+            case MATRIX:
+                jsonArray = root.createNestedArray(key);
+                _matrix = static_cast<xioMatrix*>(entry.value);
+                for (size_t i=0; i<9; i++) {
+                    jsonArray.add(_matrix->array[i/3][i%3]);
                 }
                 break;
             case CHAR_ARRAY:
@@ -225,6 +232,8 @@ void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
     char* charPtr;
     float* floatPtr;
     int* intPtr;
+    xioVector* vectorPtr;
+    xioMatrix* matrixPtr;
 
     switch (entry->type) {
         case BOOL: 
@@ -243,10 +252,16 @@ void updateSetting(const settingTableEntry* entry, JsonVariant newValue) {
             intPtr = static_cast<int*>(entry->value); // Cast the value pointer to int*
             *intPtr = newValue.as<int>(); // Assign the new value to the setting value
             break;
-        case FLOAT_ARRAY:
-            floatPtr = static_cast<float*>(entry->value); // Cast the value pointer to float*
-            for (size_t i=0; i<entry->len; i++) { // Copy the new array values to the setting value
-                floatPtr[i] = newValue[i];
+        case VECTOR:
+            vectorPtr = static_cast<xioVector*>(entry->value); // Cast the value pointer to float*
+            for (size_t i=0; i<3; i++) { // Copy the new array values to the setting value
+                vectorPtr->array[i] = newValue[i];
+            }
+            break;
+        case MATRIX:
+            matrixPtr = static_cast<xioMatrix*>(entry->value); // Cast the value pointer to float*
+            for (size_t i=0; i<9; i++) { // Copy the new array values to the setting value
+                matrixPtr->array[i/3][i%3] = newValue[i];
             }
             break;
         case CHAR_ARRAY:

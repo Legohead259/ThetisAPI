@@ -34,6 +34,11 @@ bool xioAPI::begin(Stream* port) {
     return true;
 }
 
+bool xioAPI::begin(Stream* port, WiFiUDP* server) {
+    udpXIO = server;
+    return begin(port);
+}
+
 
 // =========================
 // === COMMAND FUNCTIONS ===
@@ -56,7 +61,8 @@ void xioAPI::sendSetting(const settingTableEntry* entry) {
     SettingType _entryType = entry->type;
     void* _entryValue = entry->value;
     JsonArray _settingArray;
-    const float* _array;
+    xioVector* _vector;
+    xioMatrix* _matrix;
 
     switch (_entryType) {
         case BOOL:
@@ -71,11 +77,18 @@ void xioAPI::sendSetting(const settingTableEntry* entry) {
         case INT:
             _doc[key] = *(int*) _entryValue;
             break;
-        case FLOAT_ARRAY:
+        case VECTOR:
             _settingArray = _doc.createNestedArray(key);
-            _array = static_cast<const float*>(_entryValue);
-            for (size_t i=0; i<entry->len; i++) {
-                _settingArray.add(_array[i]);
+            _vector = static_cast<xioVector*>(_entryValue);
+            for (size_t i=0; i<3; i++) {
+                _settingArray.add(_vector->array[i]);
+            }
+            break;
+        case MATRIX:
+            _settingArray = _doc.createNestedArray(key);
+            _matrix = static_cast<xioMatrix*>(_entryValue);
+            for (size_t i=0; i<9; i++) {
+                _settingArray.add(_matrix->array[i/3][i%3]);
             }
             break;
         case CHAR_ARRAY:

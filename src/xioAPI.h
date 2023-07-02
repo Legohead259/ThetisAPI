@@ -29,16 +29,19 @@
 #include "xioAPI_Settings.h"
 #include "xioAPI_Protocol.h"
 #include "xioAPI_Utility.h"
-#include "TimeLib.h" 
+#include "xioAPI_Wireless.h"
+// #include "TimeLib.h" 
 
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
+using namespace xioAPI_Wireless;
 
 typedef std::function<void()> CallbackFunction;
 
 class xioAPI {
 public:
     bool begin(Stream* port);
+    bool begin(Stream* port, WiFiUDP* udp);
     void checkForCommand();
     void handleCommand(const char* cmdPtr);
 
@@ -107,12 +110,22 @@ public:
 
     void sendInertial(InertialMessage msg) {
         // Inertial Message Format: "I,timestamp (µs),gx,gy,gz,ax,ay,az\r\n"
-        send(true, "I,%lu,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.gx, msg.gy, msg.gz, msg.ax, msg.ay, msg.az);
+        if (settings.usbDataMessagesEnabled) {
+            send(true, "I,%lu,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.gx, msg.gy, msg.gz, msg.ax, msg.ay, msg.az);
+        }
+        if (settings.udpDataMessagesEnabled) {
+            sendUDPMessage(udpXIO, msg);
+        }
     }
 
     void sendMag(MagnetoMessage msg) {
         // Magnetometer Message Format: "M,timestamp (µs),mx,my,mz\r\n"
-        send(true, "M,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.mx, msg.my, msg.mz);
+        if (settings.usbDataMessagesEnabled) {
+            send(true, "M,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.mx, msg.my, msg.mz);
+        }
+        if (settings.udpDataMessagesEnabled) {
+            sendUDPMessage(udpXIO, msg);
+        }
     }
 
     void sendTemperature(TemperatureMessage msg) {
@@ -122,12 +135,22 @@ public:
 
     void sendQuaternion(QuaternionMessage msg) {
         // Quaternion Message Format: "Q,timestamp (µs),w,x,y,z\r\n"
-        send(true, "Q,%lu,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.w, msg.x, msg.y, msg.z);
+        if (settings.usbDataMessagesEnabled) {
+            send(true, "Q,%lu,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.w, msg.x, msg.y, msg.z);
+        }
+        if (settings.udpDataMessagesEnabled) {
+            sendUDPMessage(udpXIO, msg);
+        }
     }
 
     void sendEulerAngles(EulerMessage msg) {
         // Euler Angles Message Format: "A,timestamp (µs),roll,pitch,yaw\r\n"
-        send(true, "A,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.roll, msg.pitch, msg.yaw);
+        if (settings.usbDataMessagesEnabled) {
+            send(true, "A,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.roll, msg.pitch, msg.yaw);
+        }
+        if (settings.udpDataMessagesEnabled) {
+            sendUDPMessage(udpXIO, msg);
+        }
     }
 
     void sendBattery(BatteryMessage msg) {
@@ -170,6 +193,7 @@ public:
 
 protected:
     Stream* _serialPort = nullptr;
+    WiFiUDP* udpXIO = nullptr;
     bool _isActive = false;
     ValueType _valueType;
     char _cmd[64];

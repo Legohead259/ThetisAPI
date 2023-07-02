@@ -260,9 +260,9 @@ struct SelfTestResults {
 
 typedef struct {
     int sync;
-    char *displayName;
-    char *serialNumber;
-    char *ipAddress;
+    char displayName[32];
+    char serialNumber[20];
+    char ipAddress[16];
     int tcpPort;
     int udpSendPort;
     int udpReceivePort;

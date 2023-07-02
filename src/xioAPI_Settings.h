@@ -67,6 +67,16 @@ extern File _file; // Create an object to hold the information for the JSON conf
 extern StaticJsonDocument<6144> _jsonConfigDoc; // Allocate a buffer to hold the JSON data
 extern bool _factoryMode;
 
+typedef enum {
+    BOOL,
+    CHAR,
+    FLOAT,
+    INT,
+    MATRIX,
+    VECTOR,
+    CHAR_ARRAY
+} SettingType;
+
 
 // ============================
 // === SETTINGS DEFINITIONS ===
@@ -75,17 +85,17 @@ extern bool _factoryMode;
 
 typedef struct device_settings_t {
     char calibrationDate[32]; // "YYYY-MM-DD hh:mm:ss"
-    float gyroscopeMisalignment[9];
-    float gyroscopeSensitivity[3];
-    float gyroscopeOffset[3]; 
-    float accelerometerMisalignment[9];
-    float accelerometerSensitivity[3];
-    float accelerometerOffset[3];
-    float softIronMatrix[9];
-    float hardIronOffset[3];
-    float highGAccelerometerMisalignment[9];
-    float highGAccelerometerSensitivity[3];
-    float highGAccelerometerOffset[3];
+    xioMatrix gyroscopeMisalignment;
+    xioVector gyroscopeSensitivity[3];
+    xioVector gyroscopeOffset[3]; 
+    xioMatrix accelerometerMisalignment[9];
+    xioVector accelerometerSensitivity[3];
+    xioVector accelerometerOffset[3];
+    xioMatrix softIronMatrix[9];
+    xioVector hardIronOffset[3];
+    xioMatrix highGAccelerometerMisalignment[9];
+    xioVector highGAccelerometerSensitivity[3];
+    xioVector highGAccelerometerOffset[3];
     char deviceName[32]; // "x-IMU3"
     char serialNumber[20]; // "XXXX-XXXX-XXXX-XXXX"
     char firmwareVersion[10]; // "vXX.YY.ZZ"
@@ -157,15 +167,6 @@ typedef struct device_settings_t {
 
 extern device_settings_t settings;
 
-typedef enum {
-    BOOL,
-    CHAR,
-    FLOAT,
-    INT,
-    FLOAT_ARRAY,
-    CHAR_ARRAY
-} SettingType;
-
 struct settingTableEntry {
     const char* key;
     unsigned long hash;
@@ -188,6 +189,14 @@ inline T getSetting(const char* key) {
         return _jsonConfigDoc[key].as<T>();
     }
     return T();
+}
+
+template<typename T>
+inline T getSetting(unsigned long hash);
+
+template<>
+inline bool getSetting<bool>(unsigned long hash) {
+    return false;
 }
 
 void updateSetting(const settingTableEntry* entry, JsonVariant newValue);
@@ -250,16 +259,22 @@ inline void updateSetting<int>(unsigned long hash, int newValue) {
 }
 
 template<>
-inline void updateSetting<float[]>(unsigned long hash, float newValue[]) {
+inline void updateSetting<xioVector*>(unsigned long hash, xioVector* newValue) {
+    settingTableEntry* _entryPtr = getSettingEntry(hash);
+    if (_entryPtr == nullptr) return;
+
+    if (_entryPtr->type == VECTOR) {
+        memcpy(_entryPtr->value, newValue, sizeof(xioVector));
+    }
+}
+
+template<>
+inline void updateSetting<xioMatrix*>(unsigned long hash, xioMatrix* newValue) {
     settingTableEntry* _entryPtr = getSettingEntry(hash);
     if (_entryPtr == nullptr) return;
     
-    float* floatPtr;
-    if (_entryPtr->type == INT) {
-        floatPtr = static_cast<float*>(_entryPtr->value); // Cast the value pointer to float*
-        for (size_t i=0; i<_entryPtr->len; i++) { // Copy the new array values to the setting value
-            floatPtr[i] = newValue[i];
-        }
+    if (_entryPtr->type == MATRIX) {
+        memcpy(_entryPtr->value, newValue, sizeof(xioMatrix));
     }
 }
 

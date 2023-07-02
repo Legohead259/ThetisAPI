@@ -224,5 +224,38 @@ typedef enum ValueType {
     JSON_NULL,
     JSON_UNDEFINED
 } ValueType;
+
+/**
+ * @brief 3D vector.
+ */
+typedef union {
+    float array[3];
+
+    struct {
+        float x;
+        float y;
+        float z;
+    } axis;
+} xioVector;
+
+/**
+ * @brief 3x3 matrix in row-major order.
+ * See http://en.wikipedia.org/wiki/Row-major_order
+ */
+typedef union {
+    float array[3][3];
+
+    struct {
+        float xx;
+        float xy;
+        float xz;
+        float yx;
+        float yy;
+        float yz;
+        float zx;
+        float zy;
+        float zz;
+    } element;
+} xioMatrix;
 }
 #endif // xioAPI_Types_h
