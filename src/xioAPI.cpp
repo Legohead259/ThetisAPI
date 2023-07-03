@@ -35,7 +35,7 @@ bool xioAPI::begin(Stream* port) {
 }
 
 bool xioAPI::begin(Stream* port, WiFiUDP* server) {
-    udpXIO = server;
+    _udpServer = server;
     return begin(port);
 }
 
@@ -98,8 +98,8 @@ void xioAPI::sendSetting(const settingTableEntry* entry) {
             return;
     }
 
-    serializeJson(_doc, _out);
-    send(true, "%s", _out);
+    size_t outLen = serializeJson(_doc, _out);
+    send("%s", _out);
 }
 
 /**
@@ -126,8 +126,8 @@ void xioAPI::sendPing(Ping ping) {
     root["deviceName"] = "Thetis";
     root["serialNumber"] = "Unknown";
 
-    serializeJson(_doc, _out);
-    send(true, "%s", _out);
+    size_t outLen = serializeJson(_doc, _out);
+    send("%s", _out);
 }
 
 /**
@@ -166,8 +166,8 @@ void xioAPI::sendNetworkAnnouncement(NetworkAnnouncement na) {
     _doc["battery"] = na.batteryPercentage;
     _doc["status"] = na.chargingStatus;
 
-    serializeJson(_doc, _out);
-    send(true, "%s", _out);
+    size_t outLen = serializeJson(_doc, _out);
+    sendUDP((uint8_t*) _out, outLen, "255.255.255.255", 10000);
 }
 
 void xioAPI::sendSettingTable() {
@@ -178,7 +178,9 @@ void xioAPI::sendSettingTable() {
 }
 
 void xioAPI::sendSettingFile() {
-    serializeJsonPretty(_jsonConfigDoc, Serial);
+    char _out[6144];
+    size_t outLen = serializeJsonPretty(_jsonConfigDoc, _out);
+    send("%s", _out);
 }
 
 
@@ -282,7 +284,7 @@ void xioAPI::handleCommand(const char* cmdPtr) {
             if (!settings.ahrsIgnoreMagnetometer) {
                 cmdHeading();
             }
-            send(true, "{heading:%f}", getValue<float>());
+            send("{\"heading\":%0.3f}", getValue<float>());
             break;
         case xioAPI_Protocol::ACCESSORY:
             cmdSerialAccessory();
@@ -324,45 +326,108 @@ void xioAPI::handleCommand(const char* cmdPtr) {
 }
 
 
+// ====================
+// === API MESSAGES ===
+// ====================
+
+
+void xioAPI::sendInertialMessage(InertialMessage msg) {
+    // Inertial Message Format: "I,timestamp (µs),gx,gy,gz,ax,ay,az\r\n"
+    sendDataMessage("I,%lu,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.gx, msg.gy, msg.gz, msg.ax, msg.ay, msg.az);
+}
+
+void xioAPI::sendMagnetometerMessage(MagnetometerMessage msg) {
+    // Magnetometer Message Format: "M,timestamp (µs),mx,my,mz\r\n"
+    sendDataMessage("M,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.mx, msg.my, msg.mz);
+}
+
+void xioAPI::sendTemperatureMessage(TemperatureMessage msg) {
+    // Temperature Message Format: "T,timestamp (µs),temperature (°C)\r\n"
+    sendDataMessage("T,%lu,%0.4f", msg.timestamp, msg.temp);
+}
+
+void xioAPI::sendQuaternionMessage(QuaternionMessage msg) {
+    // Quaternion Message Format: "Q,timestamp (µs),w,x,y,z\r\n"
+    sendDataMessage("Q,%lu,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.w, msg.x, msg.y, msg.z);
+}
+
+void xioAPI::sendEulerMessage(EulerMessage msg) {
+    // Euler Angles Message Format: "A,timestamp (µs),roll,pitch,yaw\r\n"
+    sendDataMessage("A,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.roll, msg.pitch, msg.yaw);
+}
+
+void xioAPI::sendBatteryMessage(BatteryMessage msg) {
+    // Battery Message Format: "B,timestamp (µs),percentCharged,voltage,status\r\n"
+    sendDataMessage("B,%lu,%0.4f,%0.4f,%u", msg.timestamp, msg.percentCharged, msg.voltage, msg.status);
+}
+
+void xioAPI::sendRSSIMessage(RSSIMessage msg) {
+    // RSSI Message Format: "W,timestamp (µs),percent,power (dBm)\r\n"
+    sendDataMessage("W,%lu,%0.4f,%0.4f", msg.timestamp, msg.percentage, msg.power);
+}
+
+void xioAPI::sendNotification(const char *note) {
+    // Notification Message Format: "N,timestamp (µs),note\r\n"
+    send("N,%lu,%s", micros(), note);
+}
+
+void xioAPI::sendError(const char *error) {
+    // Error Message Format: "F,timestamp (µs),errorMessage\r\n"
+    send("F,%lu,%s", micros(), error);
+}
+
+
 // =========================
 // === UTILITY FUNCTIONS ===
 // =========================
 
 
-/**
- * @brief Prints the provided message to the Stream interface
- * 
- * @param line The content to print to the interface
-*/
-void xioAPI::print(const char *line) {
-	if (_serialPort != nullptr) {
-		_serialPort->print(line);
-	}
+void xioAPI::send(const char* message, ...) {
+    char buffer[128];
+    va_list args;
+    va_start(args, message);
+    size_t writeLen = vsnprintf(buffer, sizeof(buffer), message, args);
+    va_end(args);
+
+    sendSerial(buffer, writeLen);
+    
+    sendUDP((uint8_t*) buffer, writeLen);
 }
 
-/**
- * @brief Formats a provided message based on identifiers and additional arguments.
- * See the documentation for snprintf() for additional information
- * 
- * @param writeLineFeed If the message should be followed by a line feed ('\\r\\n') or not
- * @param message The message to be written to the Stream interface as a buffer conforming to snprintf() standards
-*/
-void xioAPI::send(bool writeLineFeed, const char* message, ...) {
-	char buffer[128];
+void xioAPI::sendDataMessage(const char* message, ...) {
+    char buffer[128];
+    va_list args;
+    va_start(args, message);
+    size_t writeLen = vsnprintf(buffer, sizeof(buffer), message, args);
+    va_end(args);
 
-	if (!_isActive) {
-		return;
-	}
+    if (settings.usbDataMessagesEnabled) sendSerial(buffer, writeLen);
+    if (settings.udpDataMessagesEnabled) sendUDP((uint8_t*) buffer, writeLen);
+}
 
-	va_list args;
-	va_start(args, message);
-	vsnprintf(buffer, sizeof(buffer), message, args);
-	va_end(args);
+void xioAPI::sendSerial(const char* buffer, size_t size) {
+    if (_serialPort != nullptr) {
+        if (settings.binaryModeEnabled) {
+            if (_serialPort != nullptr) { // Write data to serial terminal, if available.
+                _serialPort->write((uint8_t*) buffer, size);
+                _serialPort->write(0x0D);
+                _serialPort->write(0x0A);
+            }
+        }
+        else {
+            _serialPort->print(buffer);
+            _serialPort->print("\r\n");
+        }
+    }
+}
 
-	print(buffer);
-
-    if (writeLineFeed) {
-        print("\r\n");
+void xioAPI::sendUDP(uint8_t* buffer, size_t size, char* ipAddress, int sendPort) {
+    if (_udpServer != nullptr && settings.wirelessMode) { // Write data to UDP unicast, if available
+        _udpServer->beginPacket(ipAddress, sendPort);
+        _udpServer->write(buffer, size);
+        _udpServer->write(0x0D);
+        _udpServer->write(0x0A);
+        _udpServer->endPacket();
     }
 }
 

@@ -29,6 +29,11 @@ Release sections
 ### Changed
 - Minor refactor of `sendTime()` to `cmdReadTime()` for clarity and consistency
 - Changed type of `displayName`, `ipAddress`, and `serialNumber` to character array from character pointer
+- Changed `send()` to better generalize support between different interfaces
+
+### Removed
+- Removed `print()` functionality
+- Removed `writeLenFeed` arguments since all calls require a linefeed
   
 ---
 
