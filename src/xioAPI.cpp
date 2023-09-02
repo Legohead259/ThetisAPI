@@ -403,6 +403,8 @@ void xioAPI::sendDataMessage(const char* message, ...) {
 
     if (settings.usbDataMessagesEnabled) sendSerial(buffer, writeLen);
     if (settings.udpDataMessagesEnabled) sendUDP((uint8_t*) buffer, writeLen);
+
+    if (settings.dataLoggerDataMessagesEnabled) dataASCIIBuffer.write(buffer, writeLen);
 }
 
 void xioAPI::sendSerial(const char* buffer, size_t size) {

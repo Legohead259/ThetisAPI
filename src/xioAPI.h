@@ -26,6 +26,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WiFiUdp.h>
+#include "xioAPI_CircularBuffer.h"
 #include "xioAPI_Types.h"
 #include "xioAPI_Settings.h"
 #include "xioAPI_Protocol.h"
