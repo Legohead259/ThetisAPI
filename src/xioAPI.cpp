@@ -19,6 +19,7 @@
 #include "xioAPI.h"
 
 xioAPI api;
+CircularBuffer<char,8192> dataASCIIBuffer;
 
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
@@ -404,7 +405,12 @@ void xioAPI::sendDataMessage(const char* message, ...) {
     if (settings.usbDataMessagesEnabled) sendSerial(buffer, writeLen);
     if (settings.udpDataMessagesEnabled) sendUDP((uint8_t*) buffer, writeLen);
 
-    if (settings.dataLoggerDataMessagesEnabled) dataASCIIBuffer.write(buffer, writeLen);
+    if (settings.dataLoggerDataMessagesEnabled) {
+        for (int i=0; i<writeLen; i++) {
+            dataASCIIBuffer.push(buffer[i]);
+        }
+        dataASCIIBuffer.push('\n');
+    }
 }
 
 void xioAPI::sendSerial(const char* buffer, size_t size) {

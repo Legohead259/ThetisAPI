@@ -174,5 +174,6 @@ private:
 };
 
 extern xioAPI api;
+extern CircularBuffer<char,8192> dataASCIIBuffer;
 
 #endif // xioAPI_h
