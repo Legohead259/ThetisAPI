@@ -25,16 +25,17 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <WiFiUdp.h>
+#include "xioAPI_CircularBuffer.h"
 #include "xioAPI_Types.h"
 #include "xioAPI_Settings.h"
 #include "xioAPI_Protocol.h"
 #include "xioAPI_Utility.h"
-#include "xioAPI_Wireless.h"
-// #include "TimeLib.h" 
+
+#define XIOAPI_NETWORK_DISCOVERY_PORT 10000
 
 using namespace xioAPI_Types;
 using namespace xioAPI_Protocol;
-using namespace xioAPI_Wireless;
 
 typedef std::function<void()> CallbackFunction;
 
@@ -56,9 +57,12 @@ public:
     // --- COMMAND MESSAGES ---
     // ------------------------
 
-    void send(bool writeLineFeed, const char* message, ...);
+    void send(const char* message, ...);
+    void sendDataMessage(const char* message, ...);
+    void sendSerial(const char* message, size_t size);
+    void sendUDP(uint8_t* buffer, size_t size, char* ipAddress=settings.udpIPAddress, int sendPort=settings.udpSendPort);
     void sendSetting(const settingTableEntry* entry);
-    void sendAck(const char* cmd) { send(true, "{\"%s\":null}", cmd); }
+    void sendAck(const char* cmd) { send("{\"%s\":null}", cmd); }
     void sendPing(Ping ping);
     void sendSelfTestResults(SelfTestResults results);
     void sendNetworkAnnouncement(NetworkAnnouncement na);
@@ -108,70 +112,15 @@ public:
     // --- DATA MESSAGES ---
     // ---------------------
 
-    void sendInertial(InertialMessage msg) {
-        // Inertial Message Format: "I,timestamp (µs),gx,gy,gz,ax,ay,az\r\n"
-        if (settings.usbDataMessagesEnabled) {
-            send(true, "I,%lu,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.gx, msg.gy, msg.gz, msg.ax, msg.ay, msg.az);
-        }
-        if (settings.udpDataMessagesEnabled) {
-            sendUDPMessage(udpXIO, msg);
-        }
-    }
-
-    void sendMag(MagnetoMessage msg) {
-        // Magnetometer Message Format: "M,timestamp (µs),mx,my,mz\r\n"
-        if (settings.usbDataMessagesEnabled) {
-            send(true, "M,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.mx, msg.my, msg.mz);
-        }
-        if (settings.udpDataMessagesEnabled) {
-            sendUDPMessage(udpXIO, msg);
-        }
-    }
-
-    void sendTemperature(TemperatureMessage msg) {
-        // Temperature Message Format: "T,timestamp (µs),temperature (°C)\r\n"
-        send(true, "T,%lu,%0.4f", msg.timestamp, msg.temp);
-    }
-
-    void sendQuaternion(QuaternionMessage msg) {
-        // Quaternion Message Format: "Q,timestamp (µs),w,x,y,z\r\n"
-        if (settings.usbDataMessagesEnabled) {
-            send(true, "Q,%lu,%0.4f,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.w, msg.x, msg.y, msg.z);
-        }
-        if (settings.udpDataMessagesEnabled) {
-            sendUDPMessage(udpXIO, msg);
-        }
-    }
-
-    void sendEulerAngles(EulerMessage msg) {
-        // Euler Angles Message Format: "A,timestamp (µs),roll,pitch,yaw\r\n"
-        if (settings.usbDataMessagesEnabled) {
-            send(true, "A,%lu,%0.4f,%0.4f,%0.4f", msg.timestamp, msg.roll, msg.pitch, msg.yaw);
-        }
-        if (settings.udpDataMessagesEnabled) {
-            sendUDPMessage(udpXIO, msg);
-        }
-    }
-
-    void sendBattery(BatteryMessage msg) {
-        // Battery Message Format: "B,timestamp (µs),percentCharged,voltage,status\r\n"
-        send(true, "B,%lu,%0.4f,%0.4f,%u", msg.timestamp, msg.percentCharged, msg.voltage, msg.status);
-    }
-
-    void sendRSSI(RSSIMessage msg) {
-        // RSSI Message Format: "W,timestamp (µs),percent,power (dBm)\r\n"
-        send(true, "W,%lu,%0.4f,%0.4f", msg.timestamp, msg.percentage, msg.power);
-    }
-
-    void sendNotification(const char *note) {
-        // Notification Message Format: "N,timestamp (µs),note\r\n"
-        send(true, "N,%lu,%s", micros(), note);
-    }
-
-    void sendError(const char *error) {
-        // Error Message Format: "F,timestamp (µs),errorMessage\r\n"
-        send(true, "F,%lu,%s", micros(), error);
-    }
+    void sendInertialMessage(InertialMessage msg);
+    void sendMagnetometerMessage(MagnetometerMessage msg);
+    void sendTemperatureMessage(TemperatureMessage msg);
+    void sendQuaternionMessage(QuaternionMessage msg);
+    void sendEulerMessage(EulerMessage msg);
+    void sendBatteryMessage(BatteryMessage msg);
+    void sendRSSIMessage(RSSIMessage msg);
+    void sendNotification(const char *note);
+    void sendError(const char *error);
 
     // --------------------------------
     // --- COMMAND CALLBACK SETTERS ---
@@ -193,14 +142,16 @@ public:
 
 protected:
     Stream* _serialPort = nullptr;
-    WiFiUDP* udpXIO = nullptr;
+    WiFiUDP* _udpServer = nullptr;
     bool _isActive = false;
+    bool _usbActive = true;
+    bool _udpActive = true;
     ValueType _valueType;
     char _cmd[64];
     JsonVariant _value;
 
     ValueType parseValueType(char c);
-    void print(const char *line);
+    void write();
 
 private:
     void clearCmd();
@@ -223,5 +174,6 @@ private:
 };
 
 extern xioAPI api;
+extern CircularBuffer<char,8192> dataASCIIBuffer;
 
 #endif // xioAPI_h

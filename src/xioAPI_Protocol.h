@@ -190,7 +190,7 @@ struct InertialMessage {
     uint32_t timestamp;
 };
 
-struct MagnetoMessage {
+struct MagnetometerMessage {
     float mx, my, mz;
     uint32_t  timestamp;
 };

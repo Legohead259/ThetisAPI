@@ -25,10 +25,16 @@ Release sections
 - Added new `xioMatrix` and `xioVector` types
 - Added support for UDP WiFi messaging
 - Added dependency for `WiFiUDP`
+- Added a CircularBuffer to hold data for the datalogger
 
 ### Changed
 - Minor refactor of `sendTime()` to `cmdReadTime()` for clarity and consistency
 - Changed type of `displayName`, `ipAddress`, and `serialNumber` to character array from character pointer
+- Changed `send()` to better generalize support between different interfaces
+
+### Removed
+- Removed `print()` functionality
+- Removed `writeLenFeed` arguments since all calls require a linefeed
   
 ---
 
